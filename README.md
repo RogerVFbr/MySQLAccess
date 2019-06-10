@@ -222,9 +222,9 @@ database.add(e);
 ```
 Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
-    database.add(newEmployee, new MySQLAccess.OnComplete<Object>() {
+    database.add(newEmployee, new MySQLAccess.OnComplete<String>() {
         @Override
-        public void onSuccess(Object feedback) {
+        public void onSuccess(String feedback) {
 
         }
 
@@ -234,3 +234,5 @@ Add will always run asynchronously, if reaction is needed upon completion, use c
         }
     });
 ```
+'feedback' String parameter on the onSuccess callback will return the key generated for the newly created row on the
+table.
