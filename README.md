@@ -208,8 +208,8 @@ database.get(Employee.class, new MySQLAccess.OnGetComplete<Employee>() {
 ```
 
 ### ADD (Create)
-Add new row to table (field names must match table columns as much as possible). Automatically generated values such
-as primary key will simply be ignored.
+Add new row to table (field names must match table columns as much as possible and types must be compatible). 
+Automatically generated values such as primary key will simply be ignored.
 ```
 Employee newEmployee = new Employee(
         1,
