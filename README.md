@@ -13,6 +13,14 @@ and data type as well.
 - Needs at least Java SDK 12.
 - To use local database install MySQL Community Server (https://dev.mysql.com/downloads/mysql/)
 - To manage your databases visually use MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
+- Information you need to know before you use this:
+  - Target server I.P.
+  - Target server port number
+  - Database name
+  - Username
+  - Password
+  - Names of the tables you need to access
+  - Names and types of the columns of these tables
 
 ## SQL Connector Installation
 The SQL Connector is needed on any Java project using JDBC and dealing with MySQL 
@@ -37,16 +45,9 @@ Just copy the MySQLAccess class to your project and import accordingly.
 This section will explain how each one of the public methods contained in 
 this module behave and how they should be used.
 
-### Model / Table Correlation
-This concept is essential for the comprehension of the inner workings of this algorithm.
-MySQLAccess will use the model's field names to automatically map any data incoming or outgoing from/to the database.
-For instance, a table containing columns with names ID, NAME, DEPT and SALARY would have it's data
-routed directly to a model as long as it's field names are similar and data types are compatible.
-The example below shows the minimum possible implementation of a model capable of sending/receiving
-data from MySQLAccess methods. It's essential to implement a constructor without parameters, however, you can
-implement as many constructors as you want. You can also implement other methods, such as getters/setters or
-toString, they will not impact the algorithm.
-
+### Model / Table Correlation - Creating a model for table interaction
+The first step in using this module is creating a model, a class containing fields that are equivalent
+in name and type to the target table's columns:
 ```
 public class Employee {
 
@@ -58,10 +59,25 @@ public class Employee {
 
     // For use with MySQLAccess, model has to implement parameterless constructor
     public Employee () {}
+    
+    @Override
+    public String toString() {
+        return "Employee { " +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", dept='" + dept + '\'' +
+                ", salary=" + salary + " " +
+                '}';
+    }
 }
 ```
-
-Make sure to name your model fields with the same names of your table columns. Similar names will also work, 
+MySQLAccess will use the model's field names to automatically map any data incoming or outgoing from/to the database.
+For instance, a table containing columns with names ID, NAME, DEPT and SALARY would have it's data
+routed directly to a model as long as it's field names are similar and data types are compatible.
+The example below shows the minimum possible implementation of a model capable of sending/receiving
+data from MySQLAccess methods. It's essential to implement a constructor without parameters, however, you can
+implement as many constructors as you want. You can also implement other methods, such as getters/setters, 
+they will not impact the algorithm. toString method is not needed, but advisable. Make sure to name your model fields with the same names of your table columns. Similar names will also work, 
 however, exact names are recommended. It's also possible to omit some of the fields and retrieve only the required
 columns.
 
@@ -73,8 +89,32 @@ public class EmployeeNameAndId {
     private String name;
 
     // For use with MySQLAccess, model has to implement parameterless constructor
-    public Employee () {}
+    public EmployeeNameAndId () {}
+    
+    @Override
+    public String toString() {
+        return "EmployeeNameAndId { " +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }
 ```
 
-The example above will only retrieve the columns with best name and type match with the fields id and name.
+The example above will only retrieve the columns with best name and type match with the fields 'id' and 'name'.
+
+### MySQLAccess.Config - Creating a configuration object
+Though different constructors are available for the instantiation of the MySQLAccess module, it's recommended to use 
+the provided configuration object. At this point you will need the information for accessing you MySQL database.
+The sequence of parameter is: IP, Port number, database name, user name, password.
+```
+    public static final MySQLAccess.Config LOCAL = new MySQLAccess.Config(
+            "127.0.0.1",
+            3306,
+            "test_database",
+            "root",
+            "rootpass"
+    );
+```
+This object should typically be stored in a different file, one that you can ad to .gitignore and avoid sensitive data
+leakage.
