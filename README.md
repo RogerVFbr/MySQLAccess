@@ -3,8 +3,8 @@ The MySQLAccess module is largely inspired by no-sql database access
 libraries used in front-end Javascript projects, such as AngularFire 
 and VueFire. It's built as a form of wrapper around the native Java JDBC
 framework, with the intention of creating an even more abstract and simplified
-way of accessing MySQL databases. The concept behind this module is the idea 
-that the fields in the model will dictate what columns will be retrieved from
+way of interacting with MySQL databases and handling the decoding and encoding of data sent and received from it. 
+The concept behind this module is that the fields in the model will dictate what columns will be retrieved from
 the database. The algorithm will do it's best to figure out by himself what
 columns are to be directed to each field, based on field and column name similarity
 and data type as well.
@@ -75,7 +75,9 @@ MySQLAccess will use the model's field names to automatically map any data incom
 For instance, a table containing columns with names ID, NAME, DEPT and SALARY would have it's data
 routed directly to a model as long as it's field names are similar and data types are compatible.
 The example above shows the minimum possible implementation of a model capable of sending/receiving
-data from MySQLAccess methods. It's essential to implement a constructor without parameters, however, you can
+data from MySQLAccess methods. 
+
+It's essential to implement a constructor without parameters, however, you can
 implement as many constructors as you want. You can also implement other methods, such as getters/setters, 
 they will not impact the algorithm. 'toString' method is not needed, but advisable. Make sure to name your model fields 
 with the same names of your table columns. Similar names will also work, however, exact names are recommended. It's 
@@ -108,20 +110,20 @@ Though different constructors are available for the instantiation of the MySQLAc
 the provided configuration object. At this point you will need the information for accessing you MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
 ```
-    public static final MySQLAccess.Config LOCAL = new MySQLAccess.Config(
-            "127.0.0.1",
-            3306,
-            "test_database",
-            "root",
-            "rootpass"
-    );
+public static final MySQLAccess.Config LOCAL = new MySQLAccess.Config(
+        "127.0.0.1",
+        3306,
+        "test_database",
+        "root",
+        "rootpass"
+);
 ```
 This object should typically be stored in a different file, one that you can add to .gitignore and avoid sensitive data
 leakage.
 
 ### Step 2: Instantiate MySQLAccess object on your project
 You are now ready to instantiate MySQLAccess object on the desired sector of your project. Do this by using the 
-configuration object you created on the first step.
+configuration object you created on step 1.
 ```
 MySQLAccess database = new MySQLAccess(DatabaseConfig.LOCAL);
 ```
@@ -134,3 +136,23 @@ MySQLAccess songsDb = new MySQLAccess(DatabaseConfig.LOCAL, "songs_tbl");
 Although about 80% of the module's content lies on static methods and multiple instances should not weight too much
 on the system, it's advisable to keep module instantiation on project at a minimum and change tables dynamically as will
 be shown on next steps.
+
+If you prefer not to use the configuration object provided, you can also use the inline instantiation, including a 
+default table name or not:
+```
+MySQLAccess database = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass");
+MySQLAccess employeesDb = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass", "employees_tbl");
+```
+
+### Step 3: Activate native logging if needed
+MySQLAccess, comes bundled with a native logging system, design to show to the developer the inner workings of the 
+module. Logging is activated system-wide and should be done right after module instantiation:
+```
+database.logDetails();
+database.logInfo();
+database.logFetch();
+```
+These loggers show the following information:
+- logDetails: shows details about the data incoming and outgoing from and to the database.
+- logInfo: show the actions that the algorithm is taking to communicate with the database.
+- logFetch: shows the information the module is gathering about the database and table properties.
