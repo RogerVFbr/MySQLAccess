@@ -130,7 +130,7 @@ It's also possible to pass the default table name to the constructor, and use di
 tables. 
 ```
 MySQLAccess employeesDb = new MySQLAccess(LOCAL, "employees_tbl");
-MySQLAccess songsDb = new MySQLAccess(LOCAL, "songs_tbl");
+MySQLAccess songsTbl = new MySQLAccess(LOCAL, "songs_tbl");
 ```
 Although about 80% of the module's content lies on static methods and multiple instances should not weight too much
 on the system, it's advisable to keep module instantiation on project at a minimum and change tables dynamically as will
@@ -140,7 +140,7 @@ If you prefer not to use the configuration object provided, you can also use the
 default table name or not:
 ```
 MySQLAccess database = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass");
-MySQLAccess employeesDb = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass", "employees_tbl");
+MySQLAccess employeesTbl = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass", "employees_tbl");
 ```
 
 ### Step 3: Activate native logging if needed
@@ -153,10 +153,11 @@ MySQLAccess.logFetch();
 ```
 These loggers show the following information:
 - logDetails: shows details about the data incoming and outgoing from and to the database.
-- logInfo: show the actions that the algorithm is taking to communicate with the database.
+- logInfo: shows the actions that the algorithm is taking to communicate with the database.
 - logFetch: shows the information the module is gathering about the database and table properties.
 
-Using the loggers is recommended only during the development or debugging stages.
+Usage of the loggers is optional and recommended only during the development or debugging stages. You can activate one
+or more loggers depending on what you need to monitor.
 
 ### Step 4: Set target table
 MySQLAccess instances can have their target table changed dynamically. If during instantiation no default table was
@@ -165,17 +166,17 @@ passed as an argument, this step is mandatory:
 database.setTable("employees_tbl");
 ..... perform operations on employees table .....
 
-database.setTable("songs_tbl");
-..... perform operations on songs table .....
+database.setTable("[PASS A STRING CONTAINING THE TARGET TABLE'S NAME]");
+..... perform operations on your table .....
 ```
 It's useful to work with only one instance of the module and change tables according to your needs,
 if you wish to keep memory usage low.
 
-## Usage - C.R.U.D.
+## Usage - C.R.U.D. - Database operations
 This section will explain how each one of the public methods contained in 
 this module behave and how they should be used.
 
-### Adaptive get
+### GET (Read)
 To retrieve data from the selected table directly into a list of the desired type use the following command:
 ```
 List<Employee> employees = database.get(Employee.class);
@@ -188,6 +189,48 @@ For classes with more fields than available columns on table, only available wil
 
 First overload sends SQL WHERE clause using column name to filter. I.e.: "salary > 4000", "id = 100".
 ```
-List<Employee> employees = database.get(Employee.class, "name = 'Michael'");
+Employee employeeMichael = database.get(Employee.class, "name = 'Michael'").get(0);
 List<EmployeeNameAndId> employeeNameAndIds = database.get(EmployeeNameAndId.class, "dept = 'Sales'");
+```
+Add OnGetComplete object as last parameter on any overload to achieve asynchronous execution.
+```
+database.get(Employee.class, new MySQLAccess.OnGetComplete<Employee>() {
+    @Override
+    public void onSuccess(List<Employee> data) {
+    
+    }
+    
+    @Override
+    public void onFailure() {
+    
+    }
+});
+```
+
+### ADD (Create)
+Add new row to table (field names must match table columns as much as possible). Automatically generated values such
+as primary key will simply be ignored.
+```
+Employee e = new Song(
+        1,
+        "Simon Fuller",
+        "IT",
+        4500
+);
+
+database.add(e);
+```
+Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
+```
+    database.add(song1, new MySQLAccess.OnComplete<Object>() {
+        @Override
+        public void onSuccess(Object feedback) {
+
+        }
+
+        @Override
+        public void onFailure() {
+
+        }
+    });
 ```
