@@ -37,11 +37,15 @@ Just copy the MySQLAccess class to your project and import accordingly.
 This section will explain how each one of the public methods contained in 
 this module behave and how they should be used.
 
-#### Model / Table Correlation
+### Model / Table Correlation
 This concept is essential for the comprehension of the inner workings of this algorithm.
 MySQLAccess will use the model's field names to automatically map any data incoming or outgoing from/to the database.
-For instance, a table containing columns with names ID, NAME and AGE would have this data
-routes directly to a model as long as it's field names are similar and data types are compatible.
+For instance, a table containing columns with names ID, NAME, DEPT and SALARY would have it's data
+routed directly to a model as long as it's field names are similar and data types are compatible.
+The example below shows the minimum possible implementation of a model capable of sending/receiving
+data from MySQLAccess methods. It's essential to implement a constructor without parameters, however, you can
+implement as many constructors as you want. You can also implement other methods, such as getters/setters or
+toString, they will not impact the algorithm.
 
 ```
 public class Employee {
@@ -54,12 +58,23 @@ public class Employee {
 
     // For use with MySQLAccess, model has to implement parameterless constructor
     public Employee () {}
-
-    public Employee(int id, String name, String dept, int salary) {
-        this.id = id;
-        this.name = name;
-        this.dept = dept;
-        this.salary = salary;
-    }
 }
 ```
+
+Make sure to name your model fields with the same names of your table columns. Similar names will also work, 
+however, exact names are recommended. It's also possible to omit some of the fields and retrieve only the required
+columns.
+
+```
+public class EmployeeNameAndId {
+
+    // Attributes names must match database table column names.
+    private int id;
+    private String name;
+
+    // For use with MySQLAccess, model has to implement parameterless constructor
+    public Employee () {}
+}
+```
+
+The example above will only retrieve the columns with best name and type match with the fields id and name.
