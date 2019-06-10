@@ -211,7 +211,7 @@ database.get(Employee.class, new MySQLAccess.OnGetComplete<Employee>() {
 Add new row to table (field names must match table columns as much as possible). Automatically generated values such
 as primary key will simply be ignored.
 ```
-Employee e = new Song(
+Employee newEmployee = new Employee(
         1,
         "Simon Fuller",
         "IT",
@@ -222,7 +222,7 @@ database.add(e);
 ```
 Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
-    database.add(song1, new MySQLAccess.OnComplete<Object>() {
+    database.add(newEmployee, new MySQLAccess.OnComplete<Object>() {
         @Override
         public void onSuccess(Object feedback) {
 
