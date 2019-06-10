@@ -10,7 +10,7 @@ columns are to be directed to each field, based on field and column name similar
 and data type as well.
 
 ## Pre-requisites
-- Needs at least Java SDK 12.
+- Requires Java SDK 12.
 - To use local database install MySQL Community Server (https://dev.mysql.com/downloads/mysql/)
 - To manage your databases visually use MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
 - Information you need to know before you use this:
@@ -41,9 +41,8 @@ it relies on Java JDBC.
 ## Installation
 Just copy the MySQLAccess class to your project and import accordingly.
 
-## Usage
-This section will explain how each one of the public methods contained in 
-this module behave and how they should be used.
+## Usage - Preparation
+This section will explain each of the steps to instantiate and get started with using the module.
 
 ### Step 0: Create a model for table interaction
 The first step in using this module is creating a model, a class containing fields that are equivalent
@@ -107,7 +106,7 @@ The example above will only retrieve the columns with best name and type match w
 
 ### Step 1: MySQLAccess.Config - Creating a configuration object
 Though different constructors are available for the instantiation of the MySQLAccess module, it's recommended to use 
-the provided configuration object. At this point you will need the information for accessing you MySQL database.
+the provided configuration object. At this point you will need the information for accessing your MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
 ```
 MySQLAccess.Config LOCAL = new MySQLAccess.Config(
@@ -145,7 +144,7 @@ MySQLAccess employeesDb = new MySQLAccess("127.0.0.1", 3306, "test_database", "r
 ```
 
 ### Step 3: Activate native logging if needed
-MySQLAccess, comes bundled with a native logging system, designed to show to the developer the inner workings of the 
+MySQLAccess comes bundled with a native logging system, designed to show to the developer the inner workings of the 
 module. Logging is activated system-wide and should be done right after module instantiation:
 ```
 MySQLAccess.logDetails();
@@ -156,6 +155,7 @@ These loggers show the following information:
 - logDetails: shows details about the data incoming and outgoing from and to the database.
 - logInfo: show the actions that the algorithm is taking to communicate with the database.
 - logFetch: shows the information the module is gathering about the database and table properties.
+
 Using the loggers is recommended only during the development or debugging stages.
 
 ### Step 4: Set target table
@@ -164,8 +164,30 @@ passed as an argument, this step is mandatory:
 ```
 database.setTable("employees_tbl");
 ..... perform operations on employees table .....
+
 database.setTable("songs_tbl");
 ..... perform operations on songs table .....
 ```
 It's useful to work with only one instance of the module and change tables according to your needs,
 if you wish to keep memory usage low.
+
+## Usage - C.R.U.D.
+This section will explain how each one of the public methods contained in 
+this module behave and how they should be used.
+
+### Adaptive get
+To retrieve data from the selected table directly into a list of the desired type use the following command:
+```
+List<Employee> employees = database.get(Employee.class);
+```
+For classes with a subset of the original model fields, only necessary columns will be fetched.
+```
+List<EmployeeNameAndId> employeeNameAndIds = database.get(EmployeeNameAndId.class);
+```
+For classes with more fields than available columns on table, only available will be mapped.
+
+First overload sends SQL WHERE clause using column name to filter. I.e.: "salary > 4000", "id = 100".
+```
+List<Employee> employees = database.get(Employee.class, "name = 'Michael'");
+List<EmployeeNameAndId> employeeNameAndIds = database.get(EmployeeNameAndId.class, "dept = 'Sales'");
+```
