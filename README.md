@@ -22,15 +22,16 @@ and data type as well.
   - Names of the tables you need to access
   - Names and types of the columns of these tables
 
-## SQL Connector Installation
-The SQL Connector is needed on any Java project using JDBC and dealing with MySQL 
+## MySQL Connector Installation
+The MySQL Connector is needed on any Java project using JDBC and dealing with MySQL 
 databases. You will need to install it on your project before using MySQLAccess, since
 it relies on Java JDBC.
 - Download JDBC connector at https://dev.mysql.com/downloads/connector/j/
 - Create LIB folder in project folder.
 - Copy JAR file from downloaded zip to LIB folder (Ex. mysql-connector-java-8.0.16.jar)
-- The steps for including the connector on your project will depend on your IDE of choice.
-- If you use Eclipse, find the instruction on this link: http://www.ccs.neu.edu/home/kathleen/classes/cs3200/JDBCtutorial.pdf
+- The steps for including the connector on your project class path will depend on your IDE of choice.
+- If you use Eclipse, find the instructions on this link: http://www.ccs.neu.edu/home/kathleen/classes/cs3200/JDBCtutorial.pdf
+- If you use Netbeans, find instructions here: https://stackoverflow.com/questions/24490361/java-lang-classnotfoundexceptioncom-mysql-jdbc-driver-in-netbeans
 - If you use IntelliJ, follow the steps below:
   - Go to menu FILE > PROJECT STRUCTURE > LIBRARIES
   - Click on plus sign
@@ -121,8 +122,8 @@ This object should typically be stored in a different file, one that you can add
 leakage.
 
 ### Step 2: Instantiate MySQLAccess object on your project
-You are now ready to instantiate MySQLAccess object on the desired sector of your project. Do this by passing the 
-configuration object you created on step 1.
+You are now ready to instantiate MySQLAccess object on the desired sector of your project. Do this by passing to the 
+constructor the configuration object you created on step 1.
 ```
 MySQLAccess database = new MySQLAccess(LOCAL);
 ```
@@ -181,11 +182,11 @@ To retrieve data from the selected table directly into a list of the desired typ
 ```
 List<Employee> employees = database.get(Employee.class);
 ```
-For classes with a subset of the original model fields, only necessary columns will be fetched.
+For models with a subset of the original model fields, only necessary columns will be fetched.
 ```
 List<EmployeeNameAndId> employeeNameAndIds = database.get(EmployeeNameAndId.class);
 ```
-For classes with more fields than available columns on table, only available will be mapped.
+For models with more fields than available columns on table, only available will be mapped.
 
 First overload sends SQL WHERE clause using column name to filter. I.e.: "salary > 4000", "id = 100".
 ```
@@ -208,8 +209,8 @@ database.get(Employee.class, new MySQLAccess.OnGetComplete<Employee>() {
 ```
 
 ### ADD (Create)
-Add new row to table (field names must match table columns as much as possible and types must be compatible). 
-Automatically generated values such as primary key will simply be ignored.
+Add new row to table from a new model instance (field names must match table columns as much as possible and types 
+must be compatible). Automatically generated values such as primary key will simply be ignored.
 ```
 Employee newEmployee = new Employee(
         1,
@@ -218,7 +219,7 @@ Employee newEmployee = new Employee(
         4500
 );
 
-database.add(e);
+database.add(newEmployee);
 ```
 Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
@@ -236,3 +237,33 @@ database.add(newEmployee, new MySQLAccess.OnComplete<String>() {
 ```
 'feedback' String parameter on the onSuccess callback will return the key generated for the newly created row on the
 table.
+
+### UPDATE (Update)
+Use this to modify a row on a table. The model must have a primary key equivalent field in type and name. 
+The algorithm will use the field corresponding to the primary key to figure out which row is to be updated.
+Note that the entire row will be replace with the new content.
+```
+Employee updatedEmployee = new Employee(
+        30,
+        "Rosane Miller",
+        "Sales",
+        3000
+);
+
+database.update(updatedEmployee);
+```
+Update will always run asynchronously, if reaction is needed upon completion, use callbacks:
+```
+database.update(updatedEmployee, new MySQLAccess.OnComplete<Integer>() {
+    @Override
+    public void onSuccess(Integer feedback) {
+        
+    }
+
+    @Override
+    public void onFailure() {
+
+    }
+});
+```
+The Integer parameter 'feedback' sent by the onSuccess callback denotes the amount of rows affected by the command.
