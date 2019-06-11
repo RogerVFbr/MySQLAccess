@@ -10,38 +10,6 @@ import java.util.stream.Collectors;
 public class MySQLAccess {
 
     /*======================================================================================================\
-                                                 PRE INSTALLATION
-    \======================================================================================================*/
-
-    //region Pre installation instructions
-
-    /*
-
-    PRE INSTALLATION
-
-    0 - Needs at least Java SDK 12.
-    1 - To use local database install MySQL Community Server (https://dev.mysql.com/downloads/mysql/)
-    2 - To manage your databases visually use MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
-
-    SQL CONNECTOR INSTALLATION INSTRUCTIONS
-
-    1 - Go to https://dev.mysql.com/downloads/connector/
-    2 - Download corresponding CONNECTOR
-    3 - Create LIB folder in project
-    4 - Copy JAR file from downloaded zip to LIB folder (Ex. mysql-connector-java-8.0.16.jar)
-
-    5 - If in INTELLIJ:
-        a) FILE > PROJECT STRUCTURE > LIBRARIES
-        b) Click on plus sign
-        c) Select Java
-        d) Navigate to JAR file and apply
-
-     */
-
-    //endregion
-
-
-    /*======================================================================================================\
                                              STATIC CLASS VARIABLES
     \======================================================================================================*/
 
@@ -66,14 +34,10 @@ public class MySQLAccess {
     //region Colors for logs
 
     private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_BLACK = "\u001B[30m";
-    private static final String ANSI_RED = "\u001B[31m";
     private static final String ANSI_GREEN = "\u001B[32m";
     private static final String ANSI_YELLOW = "\u001B[33m";
-    private static final String ANSI_BLUE = "\u001B[34m";
     private static final String ANSI_PURPLE = "\u001B[35m";
     private static final String ANSI_CYAN = "\u001B[36m";
-    private static final String ANSI_WHITE = "\u001B[37m";
 
     //endregion
 
@@ -104,7 +68,7 @@ public class MySQLAccess {
 
 
     /*======================================================================================================\
-                                               INSTANCE VARIABLES
+                                              INSTANCE VARIABLES
     \======================================================================================================*/
 
     //region Non-static instance variables
@@ -206,34 +170,6 @@ public class MySQLAccess {
         logFetch = true;
     }
 
-    private static boolean isTableSelected (String table, Config config) {
-        if (table == "") {
-            logError("No table selected on database '" + config.database + "'. Use setTable(..tablename..) " +
-                    "before executing MySQLAccess commands.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private static boolean hasConnection (Connection conn, String command, Config config) {
-        if (conn == null) {
-            logError("Unable to execute " + command + " command because there is no connection to '" +
-                    config.database + "' database.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private static boolean hasFetchedTableDetails (String database, String table) {
-        if (allColumnNames.get(database) == null || allColumnNames.get(database).get(table) == null) {
-            logError("Could not fetch table details from database.");
-            return false;
-        }
-        return true;
-    }
-
     //endregion
 
 
@@ -285,7 +221,7 @@ public class MySQLAccess {
         }
 
         // ---> Get table properties if not already present.
-        getTableProperties(config, conn, table);
+        updateTableProperties(config, conn, table);
 
         // ---> If table properties could not be fetched, abort
         if (!hasFetchedTableDetails(config.database, table)) {
@@ -434,9 +370,9 @@ public class MySQLAccess {
         }
 
         // ---> Get table properties if not already present.
-        getTableProperties(config, conn, table);
+        updateTableProperties(config, conn, table);
         for (String tableToJoinName : tablesToJoin) {
-            getTableProperties(config, conn, tableToJoinName);
+            updateTableProperties(config, conn, tableToJoinName);
         }
 
         // ---> If unable to fetch details for one or more tables, abort.
@@ -653,7 +589,7 @@ public class MySQLAccess {
         }
 
         // ---> Get table properties if not already present.
-        getTableProperties(config, conn, table);
+        updateTableProperties(config, conn, table);
 
         // ---> If unable to fetch table details, abort
         if (!hasFetchedTableDetails(config.database, table)) {
@@ -746,7 +682,7 @@ public class MySQLAccess {
         Thread t = new Thread( () -> {
 
             // ---> Get table properties of not already present
-            getTableProperties(config, conn, table);
+            updateTableProperties(config, conn, table);
 
             // ---> If unable to fetch table details, abort
             if (!hasFetchedTableDetails(config.database, table)) {
@@ -863,7 +799,7 @@ public class MySQLAccess {
         Thread t = new Thread( () -> {
 
             // ---> Get table properties of not already present
-            getTableProperties(config, conn, table);
+            updateTableProperties(config, conn, table);
 
             // ---> If unable to fetch table details, abort
             if (!hasFetchedTableDetails(config.database, table)) {
@@ -1217,12 +1153,12 @@ public class MySQLAccess {
         return true;
     }
 
-    private static void getTableProperties (Config config, Connection conn, String table) {
-        getAllTablesProperties(config, conn, table);
-        getSingleTableProperties(config, conn, table);
+    private static void updateTableProperties(Config config, Connection conn, String table) {
+        updateAllTablesProperties(config, conn, table);
+        updateSingleTableProperties(config, conn, table);
     }
 
-    private static void getAllTablesProperties (Config config, Connection conn, String tableName) {
+    private static void updateAllTablesProperties(Config config, Connection conn, String tableName) {
 
         // ---> If information has been fetched before, abort execution.
         if (tableProperties.containsKey(config.database)) {
@@ -1278,7 +1214,7 @@ public class MySQLAccess {
         }
     }
 
-    private static void getSingleTableProperties(Config config, Connection conn, String table) {
+    private static void updateSingleTableProperties(Config config, Connection conn, String table) {
 
         // ---> If information has been fetched before, abort execution.
         if (tableProperties.containsKey(config.database)) {
@@ -1436,6 +1372,43 @@ public class MySQLAccess {
     private static int min(int... numbers) {
         return Arrays.stream(numbers)
                 .min().orElse(Integer.MAX_VALUE);
+    }
+
+    //endregion
+
+
+    /*======================================================================================================\
+                                                    VALIDATION
+    \======================================================================================================*/
+
+    //region Validators
+
+    private static boolean isTableSelected (String table, Config config) {
+        if (table == "") {
+            logError("No table selected on database '" + config.database + "'. Use setTable(..tablename..) " +
+                    "before executing MySQLAccess commands.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean hasConnection (Connection conn, String command, Config config) {
+        if (conn == null) {
+            logError("Unable to execute " + command + " command because there is no connection to '" +
+                    config.database + "' database.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean hasFetchedTableDetails (String database, String table) {
+        if (allColumnNames.get(database) == null || allColumnNames.get(database).get(table) == null) {
+            logError("Could not fetch table details from database.");
+            return false;
+        }
+        return true;
     }
 
     //endregion
