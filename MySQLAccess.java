@@ -168,15 +168,15 @@ public class MySQLAccess {
         this.config.password = password;
         this.url = "jdbc:mysql://" + ip + ":" + port + "/" + database + serverTimeZone;
         try {
-
-            //Register JDBC Driver
-            //Class.forName("com.microsoft.jdbc.sqlserver.SQLServerDriver").newInstance();
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
             if (conn == null) conn = DriverManager.getConnection(url, user, password);
 
         } catch (SQLException e) {
             logError("Unable to connect to database " + database + " @ " + ip + ":" + port +
                     " with credentials " + user + " | " + password);
+            logError(e.getMessage());
+        } catch (ClassNotFoundException e) {
+            logError("Unable to locate Java JDBC Driver.");
             logError(e.getMessage());
         }
     }
@@ -718,7 +718,7 @@ public class MySQLAccess {
         addMain(element, config, conn, table, null);
     }
 
-    public <T> void add (T element, OnComplete callback) {
+    public <T> void add (T element, OnComplete<String> callback) {
         addMain(element, config, conn, table, callback);
     }
 
@@ -727,7 +727,7 @@ public class MySQLAccess {
     //region Database add main code
 
     private static <T> void addMain (T element, Config config, Connection conn, String selectedTable,
-                                     OnComplete callback) {
+                                     OnComplete<String> callback) {
 
         // ---> If no connection has been established, abort.
         if (!hasConnection(conn, "ADD", config)) {
@@ -799,10 +799,10 @@ public class MySQLAccess {
                     if (callback != null) callback.onFailure();
                     return;
                 }
-                Object key = null;
+                String key = null;
                 try (ResultSet generatedObject = ps.getGeneratedKeys();) {
                     if (generatedObject.next()) {
-                        key = generatedObject.getObject(1);
+                        key = generatedObject.getString(1);
                     }
                 }
                 if (key == null){
@@ -836,7 +836,7 @@ public class MySQLAccess {
         updateMain(element, config, conn, table, null);
     }
 
-    public <T> void update (T element, OnComplete callback) {
+    public <T> void update (T element, OnComplete<Integer> callback) {
         updateMain(element, config, conn, table, callback);
     }
 
@@ -845,7 +845,7 @@ public class MySQLAccess {
     //region Database update main code
 
     private static <T> void updateMain (T element, Config config, Connection conn, String selectedTable,
-                                        OnComplete callback) {
+                                        OnComplete<Integer> callback) {
 
         // ---> If no connection has been established, abort.
         if (!hasConnection(conn, "UPDATE", config)) {
@@ -999,7 +999,7 @@ public class MySQLAccess {
         deleteMain(sqlWhere, config, conn, table, null);
     }
 
-    public void delete (String sqlWhere, OnComplete callback) {
+    public void delete (String sqlWhere, OnComplete<Integer> callback) {
         deleteMain(sqlWhere, config, conn, table, callback);
     }
 
@@ -1008,7 +1008,7 @@ public class MySQLAccess {
     //region Database delete main code
 
     private static void deleteMain (String sqlWhere, Config config, Connection conn, String selectedTable,
-                                    OnComplete callback) {
+                                    OnComplete<Integer> callback) {
 
         // ---> If no connection has been established, abort.
         if (!hasConnection(conn, "DELETE", config)) {
@@ -1028,7 +1028,6 @@ public class MySQLAccess {
 
         // ---> Execute query on connection
         try {
-
             Statement st = conn.createStatement();
             logInfo("Executing delete query at '" + table +"': " + query);
             int result = st.executeUpdate(query);
