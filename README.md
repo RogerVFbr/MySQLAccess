@@ -191,7 +191,7 @@ For models with more fields than available columns on table, only available will
 First overload sends SQL WHERE clause using column name to filter. I.e.: "salary > 4000", "id = 100".
 ```
 Employee employeeMichael = database.get(Employee.class, "name = 'Michael'").get(0);
-List<EmployeeNameAndId> employeeNameAndIds = database.get(EmployeeNameAndId.class, "dept = 'Sales'");
+List<EmployeeNameAndId> employeeNameAndIdsFromSalesDept = database.get(EmployeeNameAndId.class, "dept = 'Sales'");
 ```
 Add OnGetComplete object as last parameter on any overload to achieve asynchronous execution.
 ```
