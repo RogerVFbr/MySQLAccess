@@ -6,8 +6,8 @@ framework, with the intention of creating an even more abstract and simplified
 way of interacting with MySQL databases and handling the decoding and encoding of data sent and received from it. 
 The concept behind this module is that the fields in the model will dictate which table columns will be retrieved from
 the database. The algorithm will do it's best to figure out by himself what
-columns are to be directed to each field, based on field and column name similarity
-and data type as well.
+columns are to be directed to each field, based on name similarity
+and data type compatibility.
 
 ## Pre-requisites
 - Requires Java SDK 12.
@@ -245,7 +245,7 @@ Note that the entire row will be overwritten by the new content.
 ```
 Employee updatedEmployee = new Employee(
         30,
-        "Rosane Miller",
+        "Rosie Miller",
         "Sales",
         3000
 );
@@ -258,6 +258,28 @@ database.update(updatedEmployee, new MySQLAccess.OnComplete<Integer>() {
     @Override
     public void onSuccess(Integer feedback) {
         
+    }
+
+    @Override
+    public void onFailure() {
+
+    }
+});
+```
+The Integer parameter 'feedback' sent by the onSuccess callback denotes the amount of rows affected by the command.
+
+### DELETE (Delete)
+Delete rows from table by passing a condition via SQL WHERE clause (possible queries: "name = 'Tears in Heaven'", 
+"id = 1"):
+```
+database.delete("name = 'Rosie Miller'");
+```
+Delete will always run asynchronously, if reaction is needed upon completion, use callbacks:
+```
+database.delete("name = 'Rosie Miller'", new MySQLAccess.OnComplete<Integer>() {
+    @Override
+    public void onSuccess(Integer feedback) {
+
     }
 
     @Override
