@@ -241,7 +241,7 @@ table.
 ### UPDATE (Update)
 Use this to modify a row on a table. The model must have a primary key equivalent field in type and name. 
 The algorithm will use the field corresponding to the primary key to figure out which row is to be updated.
-Note that the entire row will be replace with the new content.
+Note that the entire row will be overwritten by the new content.
 ```
 Employee updatedEmployee = new Employee(
         30,
