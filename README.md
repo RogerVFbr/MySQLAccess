@@ -51,7 +51,7 @@ in name and type to the target table's columns:
 ```
 public class Employee {
 
-    // Attributes names must match database table column names.
+    // Field names must match database table column names.
     private int id;
     private String name;
     private String dept;
@@ -86,7 +86,7 @@ also possible to omit some of the fields and retrieve only the required columns.
 ```
 public class EmployeeNameAndId {
 
-    // Attributes names must match database table column names.
+    // Field names must match database table column names.
     private int id;
     private String name;
 
@@ -303,7 +303,7 @@ changing each one of the rows in the employees table individually. However those
 user that will be checking the table, since it's not in his interest to see the employee's department key, but the actual
 department name itself. Below is a demonstration of how our example tables could look like:
 ```
-               EMPLOYEES TABLE
+       EMPLOYEES TABLE ('employees_tbl')                DEPARTMENTS TABLE ('departments_tbl')
 +--------------------------------------------+    +----------------------------------------------+
 |  id   |        name        |     deptId    |    |   id   |  departmentName   |  isOutsourced   |
 +--------------------------------------------+    +----------------------------------------------+
@@ -312,4 +312,33 @@ department name itself. Below is a demonstration of how our example tables could
 |   3       Rosetta Stone             3      |    |    3         Deliveries          true        |
 |   4       Robson Charles            2      |    +----------------------------------------------+
 +--------------------------------------------+  
+```
+First step to accomplish this would be to create a model containing fields with the same name of the columns you wish 
+to extract, even though the columns can be distributed amongst different tables:
+```
+public class EmployeeNameAndDept {
+
+    // Field names must match database table column names.
+    private int id;
+    private String name;
+    private String departmentName;
+
+    // For use with MySQLAccess, model has to implement parameterless constructor
+    public EmployeeNameAndDept () {}
+    
+    @Override
+    public String toString() {
+        return "Employee { " +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", departmentName='" + departmentName + '\'' +
+                '}';
+    }
+}
+```
+It's important to note that, except for the primary key column, all other columns must have unique names even if they 
+are on different tables. Next step would be simply to execute the 'getFill' command as shown below:
+```
+List<EmployeeNameAndDept> employeesAndDepartmentNames = 
+        database.getFill(EmployeeNameAndDept.class, "deptId", "departments_tbl");
 ```
