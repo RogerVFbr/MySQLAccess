@@ -86,16 +86,15 @@ public class Employee {
 }
 ```
 MySQLAccess will use the model's field names to automatically map any data incoming or outgoing from/to the database.
-For instance, a table containing columns with names ID, NAME, DEPT and SALARY would have it's data
-routed directly to a model as long as it's field names are similar and data types are compatible.
 The example above shows the minimum possible implementation of a model capable of sending/receiving
 data from MySQLAccess methods. 
 
 It's essential to implement a constructor without parameters, however, you can
 implement as many constructors as you want. You can also implement other methods, such as getters/setters, 
 they will not impact the algorithm. 'toString' method is not needed, but advisable. Make sure to name your model fields 
-with the same names of your table columns. Similar names will also work, however, exact names are recommended. It's 
-also possible to omit some of the fields and retrieve only the required columns.
+with the same names of your table columns. Similar names will also work (i.e upper/lowercase, plurals), however, 
+exact names are recommended. It's also possible to omit some of the fields. This will make the algorithm work only on 
+the required columns.
 
 ```
 public class EmployeeNameAndId {
