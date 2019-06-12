@@ -48,7 +48,20 @@ This section will explain each of the steps to instantiate and get started with 
 
 ### Step 0: Create a model for table interaction
 The first step in using this module is creating a model, a class containing fields that are equivalent
-in name and type to the target table's columns:
+in name and type to the target table's columns. Let's suppose you are trying to manipulate the values of the
+following table:
+```    
+             EMPLOYEE'S TABLE ('employees_tbl')          
++----------------------------------------------------------+
+|  id   |        name        |     dept      |    salary   |
++----------------------------------------------------------+ 
+|   1       Marcus Garvey       Sales            2000      | 
+|   2       Celina Gomes        IT               3000      | 
+|   3       Rosetta Stone       Deliveries       2500      | 
+|   4       Robson Charles      IT               4000      | 
++----------------------------------------------------------+  
+```
+Create a model as such:
 ```
 public class Employee {
 
