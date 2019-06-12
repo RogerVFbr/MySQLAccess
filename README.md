@@ -376,3 +376,36 @@ Number avgrev = database.getAvg("salary");
 Number maxdown = database.getMax("salary");
 Number mindown = database.getMin("salary");
 ```
+First overload will send and SQL WHERE clause to filter the results:
+```
+Number count = database.getCount("dept = 'IT'"); // Counts no. of employees on IT department
+Number sumrev = database.getSum("salary", "salary>2000"); // Gets sum of salaries over 2000
+Number avgrev = database.getAvg("salary", "dept = 'Sales'"); // Gets average salary on Sales department
+...
+```
+For asynchronous execution add callback to the final parameter:
+```
+database.getCount(new MySQLAccess.OnComplete<Number>() {
+    @Override
+    public void onSuccess(Number feedback) {
+        
+    }
+
+    @Override
+    public void onFailure() {
+
+    }
+});
+
+database.getMin("salary", "dept = 'Sales'", new MySQLAccess.OnComplete<Number>() {
+    @Override
+    public void onSuccess(Number feedback) {
+        
+    }
+
+    @Override
+    public void onFailure() {
+
+    }
+});
+```
