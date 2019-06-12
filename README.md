@@ -289,3 +289,27 @@ database.delete("name = 'Rosie Miller'", new MySQLAccess.OnComplete<Integer>() {
 });
 ```
 The Integer parameter 'feedback' sent by the onSuccess callback denotes the amount of rows affected by the command.
+
+## Usage - Extra Operations
+This section will explain additional ways of extracting data from your database.
+
+### GETFILL (Left inner join)
+The 'getFill' method allows the developer to perform a left inner join on the target table with minimum syntactic effort.
+Let's suppose an employees table column 'dept' (for 'department') doesn't contain the department name directly, such as 
+'IT' or  'Sales', but instead contains the keys for the departments that are, in fact, contained in another table, say, 
+the departments table. This is highly recommended for organizational purposes, since if one of the departments suddenly 
+has it's name changed, you would simply need to change the corresponding row on the departments table, instead of 
+changing each one of the rows in the employees table individually. However those keys have no informational value to the
+user that will be checking the table, since it's not in his interest to see the employee's department key, but the actual
+department name itself. Below is a demonstration of how our example tables could look like:
+```
+               EMPLOYEES TABLE
++--------------------------------------------+    +----------------------------------------------+
+|  id   |        name        |     deptId    |    |   id   |  departmentName   |  isOutsourced   |
++--------------------------------------------+    +----------------------------------------------+
+|   1       Marcus Garvey             1      |    |    1         Sales               false       |
+|   2       Celina Gomes              2      |    |    2         IT                  false       |
+|   3       Rosetta Stone             3      |    |    3         Deliveries          true        |
+|   4       Robson Charles            2      |    +----------------------------------------------+
++--------------------------------------------+  
+```
