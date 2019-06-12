@@ -191,7 +191,8 @@ For models with more fields than available columns on table, only available will
 First overload sends SQL WHERE clause using column name to filter. I.e.: "salary > 4000", "id = 100".
 ```
 Employee employeeMichael = database.get(Employee.class, "name = 'Michael'").get(0);
-List<EmployeeNameAndId> employeeNameAndIdsFromSalesDept = database.get(EmployeeNameAndId.class, "dept = 'Sales'");
+List<EmployeeNameAndId> employeeNamesAndIdsFromSalesDept = 
+           database.get(EmployeeNameAndId.class, "dept = 'Sales'");
 ```
 Add OnGetComplete object as last parameter on any overload to achieve asynchronous execution.
 ```
@@ -314,7 +315,7 @@ department name itself. Below is a demonstration of how our example tables could
 +--------------------------------------------+  
 ```
 First step to accomplish this would be to create a model containing fields with the same name of the columns you wish 
-to extract, even though the columns can be distributed amongst different tables:
+to extract, even though the columns are distributed amongst different tables:
 ```
 public class EmployeeNameAndDept {
 
@@ -341,4 +342,37 @@ are on different tables. Next step would be simply to execute the 'getFill' comm
 ```
 List<EmployeeNameAndDept> employeesAndDepartmentNames = 
         database.getFill(EmployeeNameAndDept.class, "deptId", "departments_tbl");
+```
+The first parameter will inform the model to the algorithm as done on the other get methods. The second parameter
+points the column in the target table that will be used as a reference to join the data which will be brought 
+from the secondary table. The third parameter points to the table to be joined. The algorithm will automatically 
+consider that the values of the reference columns on the target table point to the secondary table's primary key 
+column. This command will produce and retrieve the following table:
+```              
++-----------------------------------------------+
+|  id   |        name        |  departmentName  | 
++-----------------------------------------------+ 
+|   1       Marcus Garvey         Sales         | 
+|   2       Celina Gomes          IT            | 
+|   3       Rosetta Stone         Deliveries    | 
+|   4       Robson Charles        IT            | 
++-----------------------------------------------+  
+```
+If you have multiple columns on your target table referencing other tables and you wish to perform multiple joins on 
+one move, you can do this by passing an array of references in form of strings:
+```
+List<EmployeeNameDeptSalaryRangeAgeRange> employeeNameDeptSalaryRangeAgeRange = 
+        database.getFill(EmployeeNameDeptSalaryRangeAgeRange.class,
+                new String[]{"deptId", "salaryRangeId", "ageRangeId"},
+                new String[]{"departments_tbl", "salary_range_tbl", "age_range_tbl"});
+```
+
+### GETMETRICS
+The 'getMetrics' commands will retrieve data about numeric columns and row counts on the target table:
+```
+Number count = database.getCount();
+Number sumrev = database.getSum("salary");
+Number avgrev = database.getAvg("salary");
+Number maxdown = database.getMax("salary");
+Number mindown = database.getMin("salary");
 ```
