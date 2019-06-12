@@ -4,6 +4,7 @@ libraries used in front-end Javascript projects, such as AngularFire
 and VueFire. It's built as a form of wrapper around the native Java JDBC
 framework, with the intention of creating an even more abstract and simplified
 way of interacting with MySQL databases and handling the decoding and encoding of data sent and received from it. 
+
 The concept behind this module is that the fields in the model will dictate which table columns will be retrieved from
 the database. The algorithm will do it's best to figure out by himself what
 columns are to be directed to each field, based on name similarity
