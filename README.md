@@ -41,7 +41,7 @@ it relies on Java JDBC.
 - For other IDEs, please search the web for instructions.
 
 ## Installation
-Just copy the MySQLAccess class to your project and import accordingly.
+Just copy the 'mysqlaccess' package to your project and import 'MySQLAccess'.
 
 ## Usage - Preparation
 This section will explain each of the steps to instantiate and get started with using the module.
@@ -120,10 +120,10 @@ The example above will only retrieve the columns with best name and type match w
 
 ### Step 1: MySQLAccess.Config - Creating a configuration object
 Though different constructors are available for the instantiation of the MySQLAccess module, it's recommended to use 
-the provided configuration object. At this point you will need the information for accessing your MySQL database.
+the provided configuration object structure. At this point you will need the information for accessing your MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
 ```
-MySQLAccess.Config LOCAL = new MySQLAccess.Config(
+Config LOCAL = new Config(
         "127.0.0.1",
         3306,
         "test_database",
@@ -209,7 +209,7 @@ List<EmployeeNameAndId> employeeNamesAndIdsFromSalesDept =
 ```
 Add OnGetComplete object as last parameter on any overload to achieve asynchronous execution.
 ```
-database.get(Employee.class, new MySQLAccess.OnGetComplete<Employee>() {
+database.get(Employee.class, new OnGetComplete<Employee>() {
     @Override
     public void onSuccess(List<Employee> data) {
     
@@ -237,7 +237,7 @@ database.add(newEmployee);
 ```
 Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
-database.add(newEmployee, new MySQLAccess.OnComplete<String>() {
+database.add(newEmployee, OnComplete<String>() {
     @Override
     public void onSuccess(String feedback) {
 
@@ -268,7 +268,7 @@ database.update(updatedEmployee);
 ```
 Update will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
-database.update(updatedEmployee, new MySQLAccess.OnComplete<Integer>() {
+database.update(updatedEmployee, OnComplete<Integer>() {
     @Override
     public void onSuccess(Integer feedback) {
         
@@ -290,7 +290,7 @@ database.delete("name = 'Rosie Miller'");
 ```
 Delete will always run asynchronously, if reaction is needed upon completion, use callbacks:
 ```
-database.delete("name = 'Rosie Miller'", new MySQLAccess.OnComplete<Integer>() {
+database.delete("name = 'Rosie Miller'", OnComplete<Integer>() {
     @Override
     public void onSuccess(Integer feedback) {
 
@@ -398,7 +398,7 @@ Number avgrev = database.getAvg("salary", "dept = 'Sales'"); // Gets average sal
 ```
 For asynchronous execution add callback to the final parameter:
 ```
-database.getCount(new MySQLAccess.OnComplete<Number>() {
+database.getCount(OnComplete<Number>() {
     @Override
     public void onSuccess(Number feedback) {
         
@@ -410,7 +410,7 @@ database.getCount(new MySQLAccess.OnComplete<Number>() {
     }
 });
 
-database.getMin("salary", "dept = 'Sales'", new MySQLAccess.OnComplete<Number>() {
+database.getMin("salary", "dept = 'Sales'", OnComplete<Number>() {
     @Override
     public void onSuccess(Number feedback) {
         
