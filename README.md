@@ -172,7 +172,7 @@ It's useful to work with only one instance of the module and change tables accor
 if you wish to keep memory usage low.
 
 ## Database operations (C.R.U.D.)
-This section will explain how to perform each of the basic C.R.U.D (createm read update and delete) operations on 
+This section will explain how to perform each of the basic C.R.U.D (create, read, update and delete) operations on 
 the database. Examples expect that the MySQLAccess object has been instantiated on the 'database' variable and that
 a proper table has been selected either on the constructor or via the 'setTable' method previously explained.
 
