@@ -124,7 +124,7 @@ Though different constructors are available for the instantiation of the MySQLAc
 the provided configuration object structure. At this point you will need the information for accessing your MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
 ```
-MySQLAConfig LOCAL = new Config(
+MySQLAConfig LOCAL = new MySQLAConfig(
         "127.0.0.1",            // ---> Server I.P
         3306,                   // ---> Server port
         "test_database",        // ---> Database name
