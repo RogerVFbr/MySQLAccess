@@ -152,7 +152,7 @@ on the system, it's advisable to keep module instantiation on project at a minim
 be shown on next steps.
 
 If you prefer not to use the configuration object provided, you can also use the inline instantiation, including a 
-default table name or not:
+default table name or not as the last parameter on the constructor:
 ```
 MySQLAccess database = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass");
 MySQLAccess employeesTbl = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass", "employees_tbl");
