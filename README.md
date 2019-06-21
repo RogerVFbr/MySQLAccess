@@ -1,9 +1,15 @@
 # MySQL Access
-The MySQLAccess module is largely inspired by no-sql database access 
-libraries used in front-end Javascript projects, such as AngularFire 
-and VueFire. It's built as a form of wrapper around the native Java JDBC
-framework, with the intention of creating an even more abstract and simplified
-way of interacting with MySQL databases and handling the decoding and encoding of data sent and received from it. 
+The MySQLAccess module is my personal attempt to create a largely simplified and compact Java O.R.M tool specialized in MySQL,
+inspired by the lines of tools like Hibernate, iBatis or Toplink. O.R.M. stands for Object-Relational Mapping, and refers 
+to tools that aim to make the exchange of data between the memory of applications (usually in the form of lists of or individual 
+variables or objects) and persistent SQL based databases (tables and rows) much easier and streamlined than the standard
+methodology done via Java JDBC, SQL queries and the subsequent decoding/encoding of the data received/sent. 
+
+If you don't know what an O.R.M tool is or have never used one, you can find more info about the subject and popular technologies
+on the field at the following links:
+
+- http://www.providenceconsulting.in/technologies/java-jee/java-orm-tools.html
+- https://en.wikipedia.org/wiki/List_of_object-relational_mapping_software    
 
 The concept behind this module is that the fields in the model will dictate which table columns will be retrieved from
 or manipulated on the database. The algorithm will do it's best to figure out by himself what
@@ -14,14 +20,8 @@ and data type compatibility.
 - Requires Java SDK 12.
 - To use local database install MySQL Community Server (https://dev.mysql.com/downloads/mysql/)
 - To manage your databases visually use MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
-- Information you need to know before you use this:
-  - Target server I.P.
-  - Target server port number
-  - Database name
-  - Username
-  - Password
-  - Names of the tables you need to access
-  - Names and types of the columns of these tables
+- Information about the database you wish to manipulate (server I.P., port number, database name, username, password, 
+names of the tables you need to access, names and types of the columns on these tables)
 
 ## MySQL Connector Installation
 The MySQL Connector is needed on any Java project using JDBC and dealing with MySQL 
@@ -41,7 +41,7 @@ it relies on Java JDBC.
 - For other IDEs, please search the web for instructions.
 
 ## Installation
-Just copy the 'mysqlaccess' package to your project and import 'MySQLAccess'.
+Just copy the 'mysqlaccess' package to your project and import 'MySQLAccess' class.
 
 ## Usage - Preparation
 This section will explain each of the steps to instantiate and get started with using the module.
@@ -118,17 +118,17 @@ public class EmployeeNameAndId {
 
 The example above will only retrieve the columns with best name and type match with the fields 'id' and 'name'.
 
-### Step 1: MySQLAccess.Config - Creating a configuration object
+### Step 1: MySQLAConfig - Creating a configuration object
 Though different constructors are available for the instantiation of the MySQLAccess module, it's recommended to use 
 the provided configuration object structure. At this point you will need the information for accessing your MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
 ```
-Config LOCAL = new Config(
-        "127.0.0.1",
-        3306,
-        "test_database",
-        "root",
-        "rootpass"
+MySQLAConfig LOCAL = new Config(
+        "127.0.0.1",            // ---> Server I.P
+        3306,                   // ---> Server port
+        "test_database",        // ---> Database name
+        "root",                 // ---> User name
+        "rootpass"              // ---> Password
 );
 ```
 This object should typically be stored in a different file, one that you can add to .gitignore and avoid sensitive data
@@ -157,23 +157,7 @@ MySQLAccess database = new MySQLAccess("127.0.0.1", 3306, "test_database", "root
 MySQLAccess employeesTbl = new MySQLAccess("127.0.0.1", 3306, "test_database", "root", "rootpass", "employees_tbl");
 ```
 
-### Step 3: Activate native logging if needed
-MySQLAccess comes bundled with a native logging system, designed to show to the developer the inner workings of the 
-module. Logging is activated system-wide and should be done right after module instantiation:
-```
-MySQLAccess.logDetails();
-MySQLAccess.logInfo();
-MySQLAccess.logFetch();
-```
-These loggers show the following information:
-- logDetails: shows details about the data incoming and outgoing from and to the database.
-- logInfo: shows the actions that the algorithm is taking to communicate with the database.
-- logFetch: shows the information the module is gathering about the database and table properties.
-
-Usage of the loggers is optional and recommended only during the development or debugging stages. You can activate one
-or more loggers depending on what you need to monitor.
-
-### Step 4: Set target table
+### Step 3: Set target table
 MySQLAccess instances can have their target table changed dynamically. If during instantiation no default table was
 passed as an argument, this step is mandatory:
 ```
@@ -224,7 +208,8 @@ database.get(Employee.class, new OnGetComplete<Employee>() {
 
 ### ADD (Create)
 Add new row to table from a new model instance (field names must match table columns as much as possible and types 
-must be compatible). Automatically generated values such as primary key will simply be ignored.
+must be compatible). Fields pointing to columns that automatically generate their values on the table will simply 
+be ignored.
 ```
 Employee newEmployee = new Employee(
         1,
@@ -310,7 +295,7 @@ This section will explain additional ways of extracting data from your database.
 ### GETFILL (Left inner join)
 The 'getFill' method allows the developer to perform a left inner join on the target table with minimum syntactic effort.
 Let's suppose an employees table column 'dept' (for 'department') doesn't contain the department name directly, such as 
-'IT' or  'Sales', but instead contains the keys for the departments that are, in fact, contained in another table, say, 
+'IT' or  'Sales', but instead contains the foreign keys for the departments that are, in fact, contained in another table, say, 
 the departments table. This is highly recommended for organizational purposes, since if one of the departments suddenly 
 has it's name changed, you would simply need to change the corresponding row on the departments table, instead of 
 changing each one of the rows in the employees table individually. However those keys have no informational value to the
@@ -360,7 +345,7 @@ The first parameter will inform the model to the algorithm as done on the other 
 points the column in the target table that will be used as a reference to join the data which will be brought 
 from the secondary table. The third parameter points to the table to be joined. The algorithm will automatically 
 consider that the values of the reference columns on the target table point to the secondary table's primary key 
-column. This command will produce and retrieve the following table:
+column. This command will produce, retrieve and map the following table:
 ```              
 +-----------------------------------------------+
 |  id   |        name        |  departmentName  | 
@@ -422,3 +407,19 @@ database.getMin("salary", "dept = 'Sales'", OnComplete<Number>() {
     }
 });
 ```
+
+## Logging
+MySQLAccess comes bundled with a native logging system, designed to show to the developer the inner workings of the 
+module. Logging is activated system-wide and should be done before or right after module instantiation:
+```
+MySQLAccess.logDetails();
+MySQLAccess.logInfo();
+MySQLAccess.logFetch();
+```
+These loggers show the following information:
+- logDetails: shows details about the data incoming and outgoing from and to the database.
+- logInfo: shows the actions that the algorithm is taking to communicate with the database.
+- logFetch: shows the information the module is gathering about the database and table properties.
+
+Usage of the loggers is optional and recommended only during the development or debugging stages. You can activate one
+or more loggers depending on what you need to monitor.
