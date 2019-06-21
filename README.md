@@ -1,5 +1,5 @@
 # MySQL Access
-The MySQLAccess module is my personal attempt to create a largely simplified and compact Java O.R.M tool specialized in MySQL,
+The MySQLAccess module is my personal attempt to create a largely simplified, compact and lightweight Java O.R.M tool specialized in MySQL,
 inspired by the lines of tools like Hibernate, iBatis or Toplink. O.R.M. stands for Object-Relational Mapping, and refers 
 to tools that aim to make the exchange of data between the memory of applications (usually in the form of lists of or individual 
 variables or objects) and persistent SQL based databases (tables and rows) much easier and streamlined than the standard
