@@ -1,12 +1,13 @@
 # MySQL Access
-The MySQLAccess module is my personal attempt to create a largely simplified, compact and lightweight Java O.R.M tool specialized in MySQL,
-inspired by the lines of tools like Hibernate, iBatis or Toplink. O.R.M. stands for Object-Relational Mapping, and refers 
-to tools that aim to make the exchange of data between the memory of applications (usually in the form of lists of or individual 
-variables or objects) and persistent SQL based databases (tables and rows) much easier and streamlined than the standard
-methodology done via Java JDBC, SQL queries and the subsequent decoding/encoding of the data received/sent. 
+The **MySQLAccess** module is a personal attempt to create a largely simplified, compact and lightweight **Java O.R.M 
+tool** specialized in MySQL, inspired by the lines of tools like *Hibernate*, *iBatis* or *Toplink*. **O.R.M.** stands 
+for object-relational mapping, and refers to tools that aim to make the exchange of data between the memory of 
+applications (usually in the form of lists or individual variables or objects) and persistent SQL based databases 
+(tables and rows) much easier and streamlined than the standard methodology done via Java JDBC, SQL queries and the 
+subsequent decoding/encoding of the data received/sent. 
 
-If you don't know what an O.R.M tool is or have never used one, you can find more info about the subject and popular technologies
-on the field at the following links:
+If you don't know what an O.R.M tool is or have never used one, you can find more info about the subject and popular 
+technologies on the field at the following links:
 
 - http://www.providenceconsulting.in/technologies/java-jee/java-orm-tools.html
 - https://en.wikipedia.org/wiki/List_of_object-relational_mapping_software    
@@ -31,9 +32,9 @@ it relies on Java JDBC.
 - Create LIB folder in project folder.
 - Copy JAR file from downloaded zip to LIB folder (Ex. mysql-connector-java-8.0.16.jar)
 - The steps for including the connector on your project class path will depend on your IDE of choice.
-- If you use Eclipse, find the instructions on this link: http://www.ccs.neu.edu/home/kathleen/classes/cs3200/JDBCtutorial.pdf
-- If you use Netbeans, find instructions here: https://stackoverflow.com/questions/24490361/java-lang-classnotfoundexceptioncom-mysql-jdbc-driver-in-netbeans
-- If you use IntelliJ, follow the steps below:
+- If you use **Eclipse**, find the instructions on this link: http://www.ccs.neu.edu/home/kathleen/classes/cs3200/JDBCtutorial.pdf
+- If you use **Netbeans**, find instructions here: https://stackoverflow.com/questions/24490361/java-lang-classnotfoundexceptioncom-mysql-jdbc-driver-in-netbeans
+- If you use **IntelliJ**, follow the steps below:
   - Go to menu FILE > PROJECT STRUCTURE > LIBRARIES
   - Click on plus sign
   - Select Java
@@ -43,7 +44,7 @@ it relies on Java JDBC.
 ## Installation
 Just copy the 'mysqlaccess' package to your project and import 'MySQLAccess' class.
 
-## Usage - Preparation
+## Setting up
 This section will explain each of the steps to instantiate and get started with using the module.
 
 ### Step 0: Create a model for table interaction
@@ -118,7 +119,7 @@ public class EmployeeNameAndId {
 
 The example above will only retrieve the columns with best name and type match with the fields 'id' and 'name'.
 
-### Step 1: MySQLAConfig - Creating a configuration object
+### Step 1: creating a MySQLAConfig configuration object
 Though different constructors are available for the instantiation of the MySQLAccess module, it's recommended to use 
 the provided configuration object structure. At this point you will need the information for accessing your MySQL database.
 The sequence of parameters is: IP, port number, database name, user name and password.
@@ -170,11 +171,12 @@ database.setTable("[PASS A STRING CONTAINING THE TARGET TABLE'S NAME]");
 It's useful to work with only one instance of the module and change tables according to your needs,
 if you wish to keep memory usage low.
 
-## Usage - C.R.U.D. - Database operations
-This section will explain how each one of the public methods contained in 
-this module behave and how they should be used.
+## Database operations (C.R.U.D.)
+This section will explain how to perform each of the basic C.R.U.D (createm read update and delete) operations on 
+the database. Examples expect that the MySQLAccess object has been instantiated on the 'database' variable and that
+a proper table has been selected either on the constructor or via the 'setTable' method previously explained.
 
-### GET (Read)
+### Get (Read)
 To retrieve data from the selected table directly into a list of the desired type use the following command:
 ```
 List<Employee> employees = database.get(Employee.class);
@@ -206,7 +208,7 @@ database.get(Employee.class, new OnGetComplete<Employee>() {
 });
 ```
 
-### ADD (Create)
+### Add (Create)
 Add new row to table from a new model instance (field names must match table columns as much as possible and types 
 must be compatible). Fields pointing to columns that automatically generate their values on the table will simply 
 be ignored.
@@ -237,7 +239,7 @@ database.add(newEmployee, OnComplete<String>() {
 'feedback' String parameter on the onSuccess callback will return the key generated for the newly created row on the
 table.
 
-### UPDATE (Update)
+### Update (Update)
 Use this to modify a row on a table. The model must have a primary key equivalent field in type and name. 
 The algorithm will use the field corresponding to the primary key to figure out which row is to be updated.
 Note that the entire row will be overwritten by the new content.
@@ -267,7 +269,7 @@ database.update(updatedEmployee, OnComplete<Integer>() {
 ```
 The Integer parameter 'feedback' sent by the onSuccess callback denotes the amount of rows affected by the command.
 
-### DELETE (Delete)
+### Delete (Delete)
 Delete rows from table by passing a condition via SQL WHERE clause (possible queries: "name = 'Tears in Heaven'", 
 "id = 1"):
 ```
@@ -289,10 +291,10 @@ database.delete("name = 'Rosie Miller'", OnComplete<Integer>() {
 ```
 The Integer parameter 'feedback' sent by the onSuccess callback denotes the amount of rows affected by the command.
 
-## Usage - Extra Operations
+## Extra Operations
 This section will explain additional ways of extracting data from your database.
 
-### GETFILL (Left inner join)
+### GetFill (Left inner join)
 The 'getFill' method allows the developer to perform a left inner join on the target table with minimum syntactic effort.
 Let's suppose an employees table column 'dept' (for 'department') doesn't contain the department name directly, such as 
 'IT' or  'Sales', but instead contains the foreign keys for the departments that are, in fact, contained in another table, say, 
@@ -365,7 +367,7 @@ List<EmployeeNameDeptSalaryRangeAgeRange> employeeNameDeptSalaryRangeAgeRange =
                 new String[]{"departments_tbl", "salary_range_tbl", "age_range_tbl"});
 ```
 
-### GETMETRICS
+### GetMetrics
 The 'getMetrics' commands will retrieve data about numeric columns and row counts on the target table:
 ```
 Number count = database.getCount();
