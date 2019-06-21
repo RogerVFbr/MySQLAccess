@@ -144,7 +144,7 @@ MySQLAccess database = new MySQLAccess(LOCAL);
 It's also possible to pass the default table name to the constructor, and use different instances to access different
 tables. 
 ```
-MySQLAccess employeesDb = new MySQLAccess(LOCAL, "employees_tbl");
+MySQLAccess employeesTbl = new MySQLAccess(LOCAL, "employees_tbl");
 MySQLAccess songsTbl = new MySQLAccess(LOCAL, "songs_tbl");
 ```
 Although about 80% of the module's content lies on static methods and multiple instances should not weight too much
