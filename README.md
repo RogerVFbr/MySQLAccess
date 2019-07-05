@@ -232,7 +232,21 @@ Employee newEmployee = new Employee(
 
 database.add(newEmployee);
 ```
-Add will always run asynchronously, if reaction is needed upon completion, use callbacks:
+To test whether the commando has been successfully executed, assign method return to an Object variable. A null result 
+means the operation has NOT been successfully completed. If operation succeeds, the key for the newly created row will
+be retrieved.
+```
+Object result = database.add(newEmployee);
+
+if (result != null) {
+    System.out.println("Successfully added new row under following primary key: " + result);
+}
+else {
+    System.out.println("Could not add new row to table.");
+}
+```
+
+To achieve asynchronous operation and react upon completion, use callbacks:
 ```
 database.add(newEmployee, OnComplete<String>() {
     @Override
