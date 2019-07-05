@@ -283,7 +283,7 @@ rows will be retrieved.
 Integer result = database.update(newEmployee);
 
 if (result != null) {
-    System.out.println("Successfully updated " + result + " rows");
+    System.out.println("Successfully updated " + result + " rows.");
 }
 else {
     System.out.println("Could not update row to table.");
@@ -318,7 +318,7 @@ rows will be retrieved.
 Integer result = database.delete("name = 'Rosie Miller'");
 
 if (result != null) {
-    System.out.println("Successfully deleted " + result + " rows");
+    System.out.println("Successfully deleted " + result + " rows.");
 }
 else {
     System.out.println("Could not delete row on table.");
