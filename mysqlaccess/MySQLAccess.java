@@ -1,6 +1,6 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.Config;
+import com.company.mysqlaccess.models.MySQLAConfig;
 
 import java.sql.*;
 import java.util.*;
@@ -18,7 +18,7 @@ public class MySQLAccess {
     private Connection conn;
     private String url = "";
     private String table = "";
-    private Config config = new Config();
+    private MySQLAConfig config = new MySQLAConfig();
 
     //endregion
 
@@ -38,11 +38,11 @@ public class MySQLAccess {
         setTable(tableName);
     }
 
-    public MySQLAccess(Config config) {
+    public MySQLAccess(MySQLAConfig config) {
         constructorProcedures(config.ip, config.port, config.database, config.user, config.password);
     }
 
-    public MySQLAccess(Config config, String tableName) {
+    public MySQLAccess(MySQLAConfig config, String tableName) {
         constructorProcedures(config.ip, config.port, config.database, config.user, config.password);
         setTable(tableName);
     }
@@ -84,6 +84,30 @@ public class MySQLAccess {
     public static void logInfo () { MySQLA_loggers.logInfo(); }
 
     public static void logFetch () { MySQLA_loggers.logFetch(); }
+
+    public void setCache(String tableName, int time) {
+        MySQLA_cache.setCache(config.database, tableName, time);
+    }
+
+    public void setCache(int time) {
+        MySQLA_cache.setCache(config.database, this.table, time);
+    }
+
+    public void stopCache() {
+        MySQLA_cache.stopCache(config.database, this.table);
+    }
+
+    public void stopCache(String tableName) {
+        MySQLA_cache.stopCache(config.database, tableName);
+    }
+
+    public void clearCache() {
+        MySQLA_cache.deleteCache(config.database, this.table);
+    };
+
+    public String getCurrentPrimaryFieldName() {
+        return MySQLA_tableProperties.getPrimaryKeys().get(config.database).get(this.table);
+    }
 
     //endregion
 
@@ -295,7 +319,7 @@ public class MySQLAccess {
     public void getMin(String column, OnComplete<Number> callback) {
         Thread t = new Thread( () -> {
             MySQLA_crud_getMetrics.getMetrics(config, conn, table, column, "MIN", null,
-                    null);
+                    callback);
         });
         t.start();
     }
@@ -321,12 +345,15 @@ public class MySQLAccess {
 
     //region Database add overloads
 
-    public <T> void add (T element) {
-        MySQLA_crud_add.addMain(element, config, conn, table, null);
+    public <T> Object add (T element) {
+        return MySQLA_crud_add.addMain(element, config, conn, table, null);
     }
 
     public <T> void add (T element, OnComplete<String> callback) {
-        MySQLA_crud_add.addMain(element, config, conn, table, callback);
+        Thread t = new Thread( () -> {
+            MySQLA_crud_add.addMain(element, config, conn, table, callback);
+        });
+        t.start();
     }
 
     //endregion
@@ -338,12 +365,15 @@ public class MySQLAccess {
 
     //region Database update overloads
 
-    public <T> void update (T element) {
-        MySQLA_crud_update.updateMain(element, config, conn, table, null);
+    public <T> Integer update (T element) {
+        return MySQLA_crud_update.updateMain(element, config, conn, table, null);
     }
 
     public <T> void update (T element, OnComplete<Integer> callback) {
-        MySQLA_crud_update.updateMain(element, config, conn, table, callback);
+        Thread t = new Thread( () -> {
+            MySQLA_crud_update.updateMain(element, config, conn, table, callback);
+        });
+        t.start();
     }
 
     //endregion
@@ -355,14 +385,43 @@ public class MySQLAccess {
 
     //region Database delete overloads
 
-    public void delete (String sqlWhere) {
-        MySQLA_crud_delete.deleteMain(sqlWhere, config, conn, table, null);
+    public Integer delete (String sqlWhere) {
+        return MySQLA_crud_delete.deleteMain(sqlWhere, config, conn, table, null);
     }
 
     public void delete (String sqlWhere, OnComplete<Integer> callback) {
-        MySQLA_crud_delete.deleteMain(sqlWhere, config, conn, table, callback);
+        Thread t = new Thread( () -> {
+            MySQLA_crud_delete.deleteMain(sqlWhere, config, conn, table, callback);
+        });
+        t.start();
     }
 
     //endregion
+
+    /*======================================================================================================\
+                                             DATABASE TABLE OPERATIONS
+    \======================================================================================================*/
+
+    public boolean createTable (String tableName, String[] tableConfig) {
+        return MySQLA_createTable.createTable(conn, config.database, tableName, tableConfig, null);
+    }
+
+    public void createTable (String tableName, String[] tableConfig, OnComplete callback) {
+        Thread t = new Thread( () -> {
+            MySQLA_createTable.createTable(conn, config.database, tableName, tableConfig, callback);
+        });
+        t.start();
+    }
+
+    public boolean dropTable (String tableName) {
+        return MySQLA_createTable.dropTable(conn, config.database, tableName, null);
+    }
+
+    public void dropTable (String tableName, OnComplete callback) {
+        Thread t = new Thread( () -> {
+            MySQLA_createTable.dropTable(conn, config.database, tableName, callback);
+        });
+        t.start();
+    }
 
 }

@@ -1,12 +1,12 @@
 # MySQL Access
-The **MySQLAccess** module is a personal attempt to create a largely simplified, compact and lightweight **Java O.R.M 
-tool** specialized in MySQL, inspired by the lines of algorithms like *Hibernate*, *iBatis* or *Toplink*. **O.R.M.** stands 
+The **MySQLAccess** module is a personal attempt to create a largely simplified, compact and lightweight **Java O.R.M. 
+tool** specialized in MySQL, inspired by algorithms like *Hibernate*, *iBatis* or *Toplink*. **O.R.M.** stands 
 for object-relational mapping, and refers to implementations that aim to make the exchange of data between the memory of 
 applications (usually in the form of lists or individual variables or objects) and persistent SQL based databases 
 (tables and rows) much easier and streamlined than the standard methodology done via Java JDBC, SQL queries and the 
 subsequent decoding/encoding of the data received/sent. 
 
-If you don't know what an O.R.M tool is or have never used one, you can find more info about the subject and popular 
+If you don't know what an O.R.M. tool is or have never used one, you can find more info about the subject and popular 
 technologies on the field at the following links:
 
 - http://www.providenceconsulting.in/technologies/java-jee/java-orm-tools.html
@@ -16,6 +16,16 @@ The concept behind this module is that the fields in the model will dictate whic
 or manipulated on the database. The algorithm will do it's best to figure out by himself what
 columns are to be directed to each field, based on name similarity
 and data type compatibility.
+
+## Table of contents
+* [Pre-requisites](#pre-requisites)
+* [MySQL Connector Installation](#mysql-connector-installation)
+* [Installation](#installation)
+* [Setting Up](#setting-up)
+* [Database operations](#database-operations-crud)
+* [Extra operations](#extra-operations)
+* [Logging](#logging)
+
 
 ## Pre-requisites
 - Requires Java SDK 12.
@@ -294,7 +304,7 @@ The Integer parameter 'feedback' sent by the onSuccess callback denotes the amou
 ## Extra Operations
 This section will explain additional ways of extracting data from your database.
 
-### GetFill (Left inner join)
+### GetFill (Left inner join, many-to-one)
 The 'getFill' method allows the developer to perform a left inner join on the target table with minimum syntactic effort.
 Let's suppose an employees table column 'dept' (for 'department') doesn't contain the department name directly, such as 
 'IT' or  'Sales', but instead contains the foreign keys for the departments that are, in fact, contained in another table, say, 

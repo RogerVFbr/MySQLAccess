@@ -1,6 +1,6 @@
 package com.company.mysqlaccess.models;
 
-public class Config {
+public class MySQLAConfig {
 
     public String ip;
     public int port;
@@ -8,9 +8,9 @@ public class Config {
     public String user;
     public String password;
 
-    public Config() {};
+    public MySQLAConfig() {};
 
-    public Config(String ip, int port, String database, String user, String password) {
+    public MySQLAConfig(String ip, int port, String database, String user, String password) {
         this.ip = ip;
         this.port = port;
         this.database = database;

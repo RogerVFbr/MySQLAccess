@@ -2,7 +2,7 @@ package com.company.mysqlaccess;
 
 public class MySQLA_loggers {
 
-    private static final String TAG = "MySQLA";
+    private static final String TAG = "MSQLA";
     private static boolean logInfoB = false;
     private static boolean logDetailsB = false;
     private static boolean logFetchB = false;
@@ -31,20 +31,20 @@ public class MySQLA_loggers {
 
     public static void logFetch (String message) {
         if (!logFetchB) return;
-        System.out.println(ANSI_YELLOW + TAG + " - " + message + ANSI_RESET);
+        System.out.println(ANSI_YELLOW + TAG + ": " + message + ANSI_RESET);
     }
 
     public static void logInfo (String message) {
         if (!logInfoB) return;
-        System.out.println(ANSI_GREEN + TAG + " - " + message + ANSI_RESET);
+        System.out.println(ANSI_GREEN + TAG + ": " + message + ANSI_RESET);
     }
 
     public static void logDetails (String message) {
         if (!logDetailsB) return;
-        System.out.println(ANSI_CYAN + TAG + " - " + message + ANSI_RESET);
+        System.out.println(ANSI_CYAN + TAG + ": " + message + ANSI_RESET);
     }
 
     public static void logError (String message) {
-        System.out.println(ANSI_PURPLE + TAG + " - " + message + ANSI_RESET);
+        System.out.println(ANSI_PURPLE + TAG + ": " + message + ANSI_RESET);
     }
 }

@@ -1,6 +1,6 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.Config;
+import com.company.mysqlaccess.models.MySQLAConfig;
 
 import java.sql.Connection;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class MySQLA_validators {
 
-    public static boolean isTableSelected (String table, Config config) {
+    public static boolean isTableSelected (String table, MySQLAConfig mySQLAConfig) {
         if (table == "") return false;
         return true;
     }

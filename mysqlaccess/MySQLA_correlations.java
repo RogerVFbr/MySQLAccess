@@ -29,8 +29,8 @@ public class MySQLA_correlations {
 
         // ---> Build final property map with best correlations
         Map<String, String> propertyMap = buildFinalPropertyMap(correlations);
-        MySQLA_loggers.logInfo("Saving new column/field correlation between table '" + tableName + "' and model '"
-                + type.getName() + "': " + propertyMap);
+        MySQLA_loggers.logInfo("CORRELATIONS - Saving new column/field correlation between table '" + tableName
+                + "' and model '" + type.getName() + "': " + propertyMap);
         columnFieldCorrelations.put(correlationKey, propertyMap);
         return propertyMap;
     }

@@ -1,15 +1,12 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.Config;
+import com.company.mysqlaccess.models.MySQLAConfig;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
 
 public class MySQLA_crud_getFill {
-    public static <T> List<T> getFillMain(Class<T> type, Config config, Connection conn, String table,
+    public static <T> List<T> getFillMain(Class<T> type, MySQLAConfig config, Connection conn, String table,
                                           String[] IdColumns, String[] tablesToJoin, String sqlWhereFilter,
                                           OnGetComplete<T> callback) {
 
@@ -116,6 +113,15 @@ public class MySQLA_crud_getFill {
         query = query.replaceAll(", $", "");
         query += from + join + (sqlWhereFilter == null ? "" : where);
 
+        // ---> Retrieve data from cache if caching is enabled and available
+        List<T> cacheData = null;
+        cacheData = MySQLA_cache.isCacheAvailable(config.database, table, query);
+        if (cacheData != null) {
+            for (T t : cacheData) MySQLA_loggers.logDetails(t.toString());
+            if (callback != null) callback.onSuccess(cacheData);
+            return cacheData;
+        };
+
         // ---> Execute query on connection
         ResultSet resultSet = null;
         try {
@@ -130,11 +136,14 @@ public class MySQLA_crud_getFill {
             return returnData;
         }
 
+        // ---> Build list from retrieved data
         if (!MySQLA_listBuilder.buildListFromRetrievedData(type, resultSet, returnData, propertyMap)) {
             if (callback != null) callback.onFailure();
             return returnData;
         };
 
+        // ---> Store result to cache if available and return.
+        MySQLA_cache.storeToCache(config.database, table, query, returnData);
         if (callback != null) callback.onSuccess(returnData);
         return returnData;
     }
