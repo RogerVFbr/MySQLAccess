@@ -232,9 +232,9 @@ Employee newEmployee = new Employee(
 
 database.add(newEmployee);
 ```
-To test whether the commando has been successfully executed, assign method return to an Object variable. A null result 
-means the operation has NOT been successfully completed. If operation succeeds, the key for the newly created row will
-be retrieved.
+If you wish to test whether the command has been successfully executed, assign method return to an 'Object' variable. 
+A null result means the operation has NOT been successfully completed. If operation succeeds, the key for the newly 
+created row will be retrieved.
 ```
 Object result = database.add(newEmployee);
 
@@ -245,7 +245,6 @@ else {
     System.out.println("Could not add new row to table.");
 }
 ```
-
 To achieve asynchronous operation and react upon completion, use callbacks:
 ```
 database.add(newEmployee, OnComplete<String>() {
@@ -277,7 +276,20 @@ Employee updatedEmployee = new Employee(
 
 database.update(updatedEmployee);
 ```
-Update will always run asynchronously, if reaction is needed upon completion, use callbacks:
+If you wish to test whether the command has been successfully executed, assign method return to an 'Integer' variable. 
+A null result means the operation has NOT been successfully completed. If operation succeeds, the number of affected 
+rows will be retrieved.
+```
+Integer result = database.update(newEmployee);
+
+if (result != null) {
+    System.out.println("Successfully updated " + result + " rows");
+}
+else {
+    System.out.println("Could not update row to table.");
+}
+```
+To achieve asynchronous operation and react upon completion, use callbacks:
 ```
 database.update(updatedEmployee, OnComplete<Integer>() {
     @Override
@@ -299,7 +311,20 @@ Delete rows from table by passing a condition via SQL WHERE clause (possible que
 ```
 database.delete("name = 'Rosie Miller'");
 ```
-Delete will always run asynchronously, if reaction is needed upon completion, use callbacks:
+If you wish to test whether the command has been successfully executed, assign method return to an 'Integer' variable. 
+A null result means the operation has NOT been successfully completed. If operation succeeds, the number of affected 
+rows will be retrieved.
+```
+Integer result = database.delete("name = 'Rosie Miller'");
+
+if (result != null) {
+    System.out.println("Successfully deleted " + result + " rows");
+}
+else {
+    System.out.println("Could not delete row on table.");
+}
+```
+To achieve asynchronous operation and react upon completion, use callbacks:
 ```
 database.delete("name = 'Rosie Miller'", OnComplete<Integer>() {
     @Override
