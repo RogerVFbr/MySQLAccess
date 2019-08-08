@@ -1,6 +1,6 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.MySQLAConfig;
+import com.company.mysqlaccess.models.ColumnProps;
 
 import java.sql.*;
 import java.util.*;
@@ -14,47 +14,74 @@ public class MySQLA_tableProperties {
     private static Map<String, Map<String, Map<String, String>>> allColumnTypes = new HashMap<>();
     private static Map<String, Map<String, String>> primaryKeys = new HashMap<>();
 
-    public static Map<String, Map<String, List<String>>> getUpdateableColumns() {
-        return updateableColumns;
+    public static List<String> getUpdateableColumns(String database, String table) {
+        if (updateableColumns.containsKey(database)) {
+            if (updateableColumns.get(database).containsKey(table)) {
+                return updateableColumns.get(database).get(table);
+            }
+        }
+        return null;
     }
 
-    public static Map<String, Map<String, List<String>>> getAllColumnNames() {
-        return allColumnNames;
+    public static List<String> getAllColumns(String database, String table) {
+        if (allColumnNames.containsKey(database)) {
+            if (allColumnNames.get(database).containsKey(table)) {
+                return allColumnNames.get(database).get(table);
+            }
+        }
+        return null;
     }
 
-    public static Map<String, Map<String, Map<String, String>>> getAllColumnTypes() {
-        return allColumnTypes;
+    public static List<String> getNumericColumns(String database, String table) {
+        if (numericColumns.containsKey(database)) {
+            if (numericColumns.get(database).containsKey(table)) {
+                return numericColumns.get(database).get(table);
+            }
+        }
+        return null;
     }
 
-    public static Map<String, Map<String, String>> getPrimaryKeys() {
-        return primaryKeys;
+    public static String getColumnType(String database, String table, String column) {
+        if (allColumnTypes.containsKey(database)) {
+            if (allColumnTypes.get(database).containsKey(table)) {
+                if (allColumnTypes.get(database).get(table).containsKey(column)) {
+                    return allColumnTypes.get(database).get(table).get(column);
+                }
+            }
+        }
+        return null;
     }
 
-    public static Map<String, Map<String, List<String>>> getNumericColumns() {
-        return numericColumns;
+    public static String getPrimaryKey(String database, String table) {
+        if (primaryKeys.containsKey(database)) {
+            if (primaryKeys.get(database).containsKey(table)) {
+                return primaryKeys.get(database).get(table);
+            }
+        }
+        return null;
     }
 
-    public static void updateTableProperties(MySQLAConfig mySQLAConfig, Connection conn, String table) {
-        updateAllTablesProperties(mySQLAConfig, conn, table);
-        updateSingleTableProperties(mySQLAConfig, conn, table);
+    public static void updateTableProperties(String database, Connection conn, String table) {
+        updateAllTablesProperties(database, conn, table);
+        updateSingleTableProperties(database, conn, table);
     }
 
-    private static void updateAllTablesProperties(MySQLAConfig mySQLAConfig, Connection conn, String tableName) {
+    private static void updateAllTablesProperties(String database, Connection conn, String tableName) {
 
         // ---> If information has been fetched before, abort execution.
-        if (tableProperties.containsKey(mySQLAConfig.database)) {
-            if (tableProperties.get(mySQLAConfig.database).containsKey(tableName)) return;
+        if (tableProperties.containsKey(database)) {
+            if (tableProperties.get(database).containsKey(tableName)) return;
         }
 
         // ---> Build query and prepare receiver list
-        String query = "select * from information_schema.columns where table_schema = '" + mySQLAConfig.database + "'";
+        String query = "select * from information_schema.columns where table_schema = '" + database + "'";
         List<ColumnProps> currentTableProps = new ArrayList<>();
         Map<String, List<ColumnProps>> tablesDetails = new HashMap<>();
         String currentTableName = null;
 
         // ---> Execute query on database
         try {
-            MySQLA_loggers.logFetch("Fetching details for all tables @ database '" + mySQLAConfig.database + "'...");
+            MySQLA_loggers.logFetch("Fetching details for all tables @ database '" + database + "'...");
             Statement st = conn.createStatement();
             ResultSet resultSet = st.executeQuery(query);
 
@@ -85,30 +112,31 @@ public class MySQLA_tableProperties {
             for (Map.Entry<String, List<ColumnProps>> entry : tablesDetails.entrySet()) {
                 String table = entry.getKey();
                 List<ColumnProps> newTableProps = entry.getValue();
+                MySQLA_loggers.logFetch("");
                 MySQLA_loggers.logFetch("Details for table '" + table + "' ...");
-                saveFetchedTablesDetails(mySQLAConfig, table, newTableProps);
+                saveFetchedTablesDetails(database, table, newTableProps);
             }
 
         } catch (SQLException e) {
-            MySQLA_loggers.logError("TABLEPROPS - Unable to retrieve details from database '" + mySQLAConfig.database + "'.");
+            MySQLA_loggers.logError("TABLEPROPS - Unable to retrieve details from database '" + database + "'.");
             e.printStackTrace();
         }
     }
 
-    private static void updateSingleTableProperties(MySQLAConfig mySQLAConfig, Connection conn, String table) {
+    private static void updateSingleTableProperties(String database, Connection conn, String table) {
 
         // ---> If information has been fetched before, abort execution.
-        if (tableProperties.containsKey(mySQLAConfig.database)) {
-            if (tableProperties.get(mySQLAConfig.database).containsKey(table)) return;
+        if (tableProperties.containsKey(database)) {
+            if (tableProperties.get(database).containsKey(table)) return;
         }
 
         // ---> Build query and prepare receiver list
-        String query = "show full columns from " + mySQLAConfig.database + "." + table;
-        List<MySQLA_tableProperties.ColumnProps> newTableProps = new ArrayList<>();
+        String query = "show full columns from " + database + "." + table;
+        List<ColumnProps> newTableProps = new ArrayList<>();
 
         // ---> Execute query on database
         try {
-            MySQLA_loggers.logFetch("Fecthing details for table '" + table + "' @ '" + mySQLAConfig.database
+            MySQLA_loggers.logFetch("Fecthing details for table '" + table + "' @ '" + database
                     + "'...");
             Statement st = conn.createStatement();
             ResultSet resultSet = st.executeQuery(query);
@@ -127,40 +155,40 @@ public class MySQLA_tableProperties {
                 );
                 newTableProps.add(column);
             }
-            saveFetchedTablesDetails(mySQLAConfig, table, newTableProps);
+            saveFetchedTablesDetails(database, table, newTableProps);
 
         } catch (SQLSyntaxErrorException e) {
-            MySQLA_loggers.logError("TABLEPROPS - Table '" + table + "' @ '" + mySQLAConfig.database
+            MySQLA_loggers.logError("TABLEPROPS - Table '" + table + "' @ '" + database
                     + "' doesn't exist.");
 
         } catch (SQLException e) {
             MySQLA_loggers.logError("TABLEPROPS - Unable to retrieve details from table '" + table + "' @ '"
-                    + mySQLAConfig.database + "'.");
+                    + database + "'.");
             e.printStackTrace();
         }
     }
 
-    private static void saveFetchedTablesDetails (MySQLAConfig mySQLAConfig, String table, List<ColumnProps> newTableProps) {
+    private static void saveFetchedTablesDetails (String database, String table, List<ColumnProps> newTableProps) {
         // ---> Update main table properties map
-        if (tableProperties.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(tableProperties.get(mySQLAConfig.database));
+        if (tableProperties.containsKey(database)) {
+            Map propUpdate = new HashMap(tableProperties.get(database));
             propUpdate.put(table, newTableProps);
-            tableProperties.replace(mySQLAConfig.database, propUpdate);
+            tableProperties.replace(database, propUpdate);
 
         }
         else {
-            tableProperties.put(mySQLAConfig.database, Map.of(table, newTableProps));
+            tableProperties.put(database, Map.of(table, newTableProps));
         }
 
         // ---> Extract and store column names
         List<String> allColumnNames = newTableProps.stream().map(x -> x.field).collect(Collectors.toList());
-        if (MySQLA_tableProperties.allColumnNames.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(MySQLA_tableProperties.allColumnNames.get(mySQLAConfig.database));
+        if (MySQLA_tableProperties.allColumnNames.containsKey(database)) {
+            Map propUpdate = new HashMap(MySQLA_tableProperties.allColumnNames.get(database));
             propUpdate.put(table, allColumnNames);
-            MySQLA_tableProperties.allColumnNames.replace(mySQLAConfig.database, propUpdate);
+            MySQLA_tableProperties.allColumnNames.replace(database, propUpdate);
         }
         else {
-            MySQLA_tableProperties.allColumnNames.put(mySQLAConfig.database, Map.of(table, allColumnNames));
+            MySQLA_tableProperties.allColumnNames.put(database, Map.of(table, allColumnNames));
         }
 
         // ---> Extract and store numeric column names
@@ -169,13 +197,13 @@ public class MySQLA_tableProperties {
                 .filter(f -> MySQLA_typeEquivalency.isNumericColumn(f.type))
                 .map(x -> x.field)
                 .collect(Collectors.toList());
-        if (MySQLA_tableProperties.numericColumns.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(MySQLA_tableProperties.numericColumns.get(mySQLAConfig.database));
+        if (MySQLA_tableProperties.numericColumns.containsKey(database)) {
+            Map propUpdate = new HashMap(MySQLA_tableProperties.numericColumns.get(database));
             propUpdate.put(table, numericColumnNames);
-            MySQLA_tableProperties.numericColumns.replace(mySQLAConfig.database, propUpdate);
+            MySQLA_tableProperties.numericColumns.replace(database, propUpdate);
         }
         else {
-            MySQLA_tableProperties.numericColumns.put(mySQLAConfig.database, Map.of(table, numericColumnNames));
+            MySQLA_tableProperties.numericColumns.put(database, Map.of(table, numericColumnNames));
         }
 
         // ---> Extract and store column types
@@ -185,13 +213,13 @@ public class MySQLA_tableProperties {
         for(int x = 0; x<allColumnNames.size(); x++) {
             columnTypes.put(allColumnNames.get(x), allColumnTypes.get(x));
         }
-        if (MySQLA_tableProperties.allColumnTypes.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(MySQLA_tableProperties.allColumnTypes.get(mySQLAConfig.database));
+        if (MySQLA_tableProperties.allColumnTypes.containsKey(database)) {
+            Map propUpdate = new HashMap(MySQLA_tableProperties.allColumnTypes.get(database));
             propUpdate.put(table, columnTypes);
-            MySQLA_tableProperties.allColumnTypes.replace(mySQLAConfig.database, propUpdate);
+            MySQLA_tableProperties.allColumnTypes.replace(database, propUpdate);
         }
         else {
-            MySQLA_tableProperties.allColumnTypes.put(mySQLAConfig.database, Map.of(table, columnTypes));
+            MySQLA_tableProperties.allColumnTypes.put(database, Map.of(table, columnTypes));
         }
 
         // ---> Extract and store non-default "updatable" columns names
@@ -206,24 +234,24 @@ public class MySQLA_tableProperties {
                 .filter(z -> !excludeIfExtraContains.contains(z.extra))
                 .filter(z -> !excludeIfDefaultContains.contains(z.defaultable))
                 .map(x -> x.field).collect(Collectors.toList());
-        if (updateableColumns.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(MySQLA_tableProperties.updateableColumns.get(mySQLAConfig.database));
+        if (updateableColumns.containsKey(database)) {
+            Map propUpdate = new HashMap(MySQLA_tableProperties.updateableColumns.get(database));
             propUpdate.put(table, updatableColumnNames);
-            MySQLA_tableProperties.updateableColumns.replace(mySQLAConfig.database, propUpdate);
+            MySQLA_tableProperties.updateableColumns.replace(database, propUpdate);
         }
         else {
-            updateableColumns.put(mySQLAConfig.database, Map.of(table, updatableColumnNames));
+            updateableColumns.put(database, Map.of(table, updatableColumnNames));
         }
 
         // ---> Extract and store primary key
         String primaryKey = newTableProps.stream().filter(x -> x.key.contains("PRI")).findFirst().get().field;
-        if (primaryKeys.containsKey(mySQLAConfig.database)) {
-            Map propUpdate = new HashMap(MySQLA_tableProperties.primaryKeys.get(mySQLAConfig.database));
+        if (primaryKeys.containsKey(database)) {
+            Map propUpdate = new HashMap(MySQLA_tableProperties.primaryKeys.get(database));
             propUpdate.put(table, primaryKey);
-            MySQLA_tableProperties.primaryKeys.replace(mySQLAConfig.database, propUpdate);
+            MySQLA_tableProperties.primaryKeys.replace(database, propUpdate);
         }
         else {
-            primaryKeys.put(mySQLAConfig.database, Map.of(table, primaryKey));
+            primaryKeys.put(database, Map.of(table, primaryKey));
         }
 
         // ---> Inform dev
@@ -231,30 +259,5 @@ public class MySQLA_tableProperties {
         MySQLA_loggers.logFetch("Columns/types: " + columnTypes);
         MySQLA_loggers.logFetch("Numeric columns: " + numericColumnNames);
         MySQLA_loggers.logFetch("Updatable columns (no auto-increment, no defaults): " + updatableColumnNames);
-    }
-
-    private static class ColumnProps {
-
-        public String field;
-        public String type;
-        public String collation;
-        public String nullable;
-        public String key;
-        public String defaultable;
-        public String extra;
-        public String privileges;
-
-        public ColumnProps(String field, String type, String collation, String nullable, String key,
-                           String defaultable, String extra, String privileges) {
-
-            this.field = field;
-            this.type = type;
-            this.collation = collation;
-            this.nullable = nullable;
-            this.key = key;
-            this.defaultable = defaultable;
-            this.extra = extra;
-            this.privileges = privileges;
-        }
     }
 }

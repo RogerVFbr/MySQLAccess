@@ -1,67 +1,68 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.MySQLAConfig;
-
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.Year;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
 
 public class MySQLA_crud_update {
-    public static <T> Integer updateMain (T element, MySQLAConfig config, Connection conn, String selectedTable,
+
+    public static <T> Integer updateMain (T element, Connection conn, String database, String table,
                                        OnComplete<Integer> callback) {
 
         // ---> If no connection has been established, abort.
         if (!MySQLA_validators.hasConnection(conn)) {
             MySQLA_loggers.logError("UPDATE - Unable to execute command because there is no connection to '" +
-                    config.database + "' database.");
+                    database + "' database.");
             if (callback != null) callback.onFailure();
             return null;
         }
 
         // ---> If no table is selected, abort
-        String table = selectedTable;
-        if (!MySQLA_validators.isTableSelected(table, config)) {
-            MySQLA_loggers.logError("UPDATE - No table selected on database '" + config.database
+        if (!MySQLA_validators.isTableSelected(table)) {
+            MySQLA_loggers.logError("UPDATE - No table selected on database '" + database
                     + "'. Use setTable(..tablename..) " + "before executing mysqlaccess commands.");
             if (callback != null) callback.onFailure();
             return null;
         }
 
         // ---> Get table properties of not already present
-        MySQLA_tableProperties.updateTableProperties(config, conn, table);
+        MySQLA_tableProperties.updateTableProperties(database, conn, table);
 
         // ---> If unable to fetch table details, abort
-        if (!MySQLA_validators.hasFetchedTableDetails(config.database, table,
-                MySQLA_tableProperties.getAllColumnNames())) {
+        if (!MySQLA_validators.hasFetchedTableDetails(database, table)) {
             MySQLA_loggers.logError("UPDATE - Could not fetch table details from database.");
             if (callback != null) callback.onFailure();
             return null;
         }
 
+        // ---> Build update query
+        String query = buildSQLQuery(database, table, element);
+
+        // ---> Execute query on connection
+        return executeQueryOnConnection(conn, database, table, query, callback);
+    }
+
+    public static <T> void updateMainParallel (T element, Connection conn, String database, String table,
+                                          OnComplete<Integer> callback) {
+        Thread t = new Thread( () -> {
+            updateMain(element, conn, database, table, callback);
+        });
+        t.start();
+    }
+
+    private static <T> String buildSQLQuery(String database, String table, T element) {
+
         // ---> Use updatable columns + primary key
-        List<String> relevantColumns = MySQLA_tableProperties.getUpdateableColumns().get(config.database).get(table);
-        if (!relevantColumns.contains(MySQLA_tableProperties.getPrimaryKeys().get(config.database).get(table))) {
-            relevantColumns.add(MySQLA_tableProperties.getPrimaryKeys().get(config.database).get(table));
-        }
+        String primaryKey = MySQLA_tableProperties.getPrimaryKey(database, table);
+        List<String> relevantColumns = MySQLA_tableProperties.getUpdateableColumns(database, table);
+        if (!relevantColumns.contains(primaryKey)) relevantColumns.add(primaryKey);
 
         // ---> Figure out best correlation between database column names and model fields
         Map<String, String> propertyMap = MySQLA_correlations.getColumnFieldCorrelation(
                 element.getClass(),
                 relevantColumns,
-                config.database, table);
-
-        String primaryKey = MySQLA_tableProperties.getPrimaryKeys().get(config.database).get(table);
+                database,
+                table);
 
         // ---> Build update query
         String primaryFieldData = "";
@@ -69,79 +70,24 @@ public class MySQLA_crud_update {
         String set = "set ";
 
         for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-
-            String columnType = MySQLA_tableProperties
-                    .getAllColumnTypes()
-                    .get(config.database)
-                    .get(table)
-                    .get(entry.getKey()
-                    );
-
-            if (entry.getKey() != primaryKey) set += entry.getKey() + " = ";
-
-            try {
-                boolean isPrimaryKey = entry.getKey() == primaryKey;
-                String encode = "";
-                Field field = element.getClass().getDeclaredField(entry.getValue());
-                field.setAccessible(true);
-                Class fieldType = field.getType();
-
-                if (fieldType == String.class) {
-                    encode =  "'" + field.get(element) + "'";
-                }
-
-                else if (fieldType == Date.class) {
-                    encode = "'" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                            .format((Date) field.get(element)) + "'";
-                }
-
-                else if (fieldType == Year.class) {
-                    encode = "'" + field.get(element).toString() + "-01-01 00:00:00'";
-                }
-
-                else if (fieldType == LocalDateTime.class) {
-                    encode = "'" + DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
-                            .format((LocalDateTime) field.get(element)) + "'";
-                }
-
-                else if (fieldType == LocalDate.class) {
-                    encode = "'" + ((LocalDate) field.get(element))
-                            .format(DateTimeFormatter.ISO_LOCAL_DATE) + "'";
-                }
-
-                else if (fieldType == LocalTime.class) {
-                    encode = "'1970-01-01 " + field.get(element).toString() + "'";
-                }
-
-                else if (fieldType == java.sql.Date.class || field.getType() == java.sql.Date.class) {
-                    encode = "'" + field.get(element).toString() + "'";
-                }
-
-                else if (fieldType == Timestamp.class) {
-                    if (MySQLA_typeEquivalency.isDateTimeColumn(columnType)) {
-                        encode = "'" + field.get(element).toString() + "'";
-                    }
-                    else if (MySQLA_typeEquivalency.isDateColumn(columnType)) {
-                        encode = "'" + field.get(element).toString().split(" ")[0] + "'";
-                    }
-                }
-
-                else {
-                    encode = field.get(element).toString();
-                }
-
-                if (isPrimaryKey) primaryFieldData += encode;
-                else set += encode + ", ";
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String columnType = MySQLA_tableProperties.getColumnType(database, table, entry.getKey());
+            boolean isPrimaryKey = entry.getKey().equals(primaryKey);
+            if (!isPrimaryKey) set += entry.getKey() + " = ";
+            String encode = null;
+            try { encode = MySQLA_orm.getSQLString(element, entry.getValue(), columnType); }
+            catch (Exception e) { e.printStackTrace(); }
+            if (isPrimaryKey) primaryFieldData += encode;
+            else set += encode + ", ";
         }
 
         String where = "where " + primaryKey + " = " + primaryFieldData;
         set = set.replaceAll(", $", "") + " ";
         query += set + where;
+        return query;
+    }
 
+    private static Integer executeQueryOnConnection (Connection conn, String database, String table,
+                                                     String query, OnComplete<Integer> callback) {
         // ---> Execute query on connection
         try {
 
@@ -155,9 +101,8 @@ public class MySQLA_crud_update {
                 return null;
             }
 
-            MySQLA_loggers.logInfo("UPDATE - Successfully updated " + result + " row(s) on table '" + table + "': "
-                    + element);
-            MySQLA_cache.deleteCache(config.database, table);
+            MySQLA_loggers.logInfo("UPDATE - Successfully updated " + result + " row(s) on table '" + table + "'.");
+            MySQLA_cache.deleteCache(database, table);
             if (callback != null) callback.onSuccess(result);
             return result;
 

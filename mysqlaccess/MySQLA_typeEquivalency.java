@@ -1,5 +1,6 @@
 package com.company.mysqlaccess;
 
+import java.sql.Time;
 import java.time.*;
 import java.util.*;
 
@@ -9,6 +10,7 @@ public class MySQLA_typeEquivalency {
     private static List<String> numericColumnTypes = new ArrayList<>();
     private static List<String> dateTimeColumnTypes = new ArrayList<>();
     private static List<String> dateColumnTypes = new ArrayList<>();
+    private static List<String> timeColumnTypes = new ArrayList<>();
 
     static {
         List<Class> ints = new ArrayList<>(Arrays.asList(Integer.class, int.class, Long.class, long.class));
@@ -18,7 +20,11 @@ public class MySQLA_typeEquivalency {
         List<Class> timestp = new ArrayList<>(Arrays.asList(
                 java.sql.Date.class,
                 java.util.Date.class,
+                Calendar.class,
                 Year.class,
+                Month.class,
+                MonthDay.class,
+                Time.class,
                 java.sql.Timestamp.class,
                 LocalDate.class,
                 LocalDateTime.class,
@@ -35,10 +41,10 @@ public class MySQLA_typeEquivalency {
         typeEquivalency.put("float", Arrays.asList(Float.class, float.class));
         typeEquivalency.put("double", Arrays.asList(Double.class, double.class));
         typeEquivalency.put("decimal", Arrays.asList(java.math.BigDecimal.class));
-        typeEquivalency.put("date", Arrays.asList(java.sql.Date.class, java.util.Date.class, LocalDate.class));
+        typeEquivalency.put("date", timestp);
         typeEquivalency.put("datetime", timestp);
         typeEquivalency.put("timestamp", timestp);
-        typeEquivalency.put("time", Arrays.asList(java.sql.Time.class));
+        typeEquivalency.put("time", timestp);
         typeEquivalency.put("year", Arrays.asList(Year.class));
 
         numericColumnTypes.addAll(
@@ -46,10 +52,13 @@ public class MySQLA_typeEquivalency {
                         "double", "decimal"));
 
         dateTimeColumnTypes.addAll(
-                Arrays.asList("timestamp"));
+                Arrays.asList("timestamp", "datetime"));
 
         dateColumnTypes.addAll(
                 Arrays.asList("date"));
+
+        timeColumnTypes.addAll(
+                Arrays.asList("time"));
     }
 
     public static Map<String, List<Class>> getTypeEquivalency () {
@@ -66,5 +75,9 @@ public class MySQLA_typeEquivalency {
 
     public static boolean isDateColumn(String columnType) {
         return dateColumnTypes.contains(columnType);
+    }
+
+    public static boolean isTimeColumn(String columnType) {
+        return timeColumnTypes.contains(columnType);
     }
 }

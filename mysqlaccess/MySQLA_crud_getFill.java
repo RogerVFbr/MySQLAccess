@@ -6,7 +6,8 @@ import java.sql.*;
 import java.util.*;
 
 public class MySQLA_crud_getFill {
-    public static <T> List<T> getFillMain(Class<T> type, MySQLAConfig config, Connection conn, String table,
+
+    public static <T> List<T> getFillMain(Class<T> type, Connection conn, String database, String table,
                                           String[] IdColumns, String[] tablesToJoin, String sqlWhereFilter,
                                           OnGetComplete<T> callback) {
 
@@ -15,14 +16,14 @@ public class MySQLA_crud_getFill {
         // ---> If no connection has been established, abort.
         if (!MySQLA_validators.hasConnection(conn)) {
             MySQLA_loggers.logError("Unable to execute 'GETFILL' command because there is no connection to '" +
-                    config.database + "' database.");
+                    database + "' database.");
             if (callback != null) callback.onFailure();
             return returnData;
         }
 
         // ---> If no table is selected, abort.
-        if (!MySQLA_validators.isTableSelected(table, config)) {
-            MySQLA_loggers.logError("No table selected on database '" + config.database + "'. Use setTable(..tablename..) " +
+        if (!MySQLA_validators.isTableSelected(table)) {
+            MySQLA_loggers.logError("No table selected on database '" + database + "'. Use setTable(..tablename..) " +
                     "before executing mysqlaccess commands.");
             if (callback != null) callback.onFailure();
             return returnData;
@@ -51,21 +52,19 @@ public class MySQLA_crud_getFill {
         }
 
         // ---> Get table properties if not already present.
-        MySQLA_tableProperties.updateTableProperties(config, conn, table);
+        MySQLA_tableProperties.updateTableProperties(database, conn, table);
         for (String tableToJoinName : tablesToJoin) {
-            MySQLA_tableProperties.updateTableProperties(config, conn, tableToJoinName);
+            MySQLA_tableProperties.updateTableProperties(database, conn, tableToJoinName);
         }
 
         // ---> If unable to fetch details for one or more tables, abort.
-        if (!MySQLA_validators.hasFetchedTableDetails(config.database, table,
-                MySQLA_tableProperties.getAllColumnNames())) {
+        if (!MySQLA_validators.hasFetchedTableDetails(database, table)) {
             MySQLA_loggers.logError("Could not fetch table details from database.");
             if (callback != null) callback.onFailure();
             return returnData;
         }
         for (String tableToJoinName : tablesToJoin) {
-            if (!MySQLA_validators.hasFetchedTableDetails(config.database, tableToJoinName,
-                    MySQLA_tableProperties.getAllColumnNames())) {
+            if (!MySQLA_validators.hasFetchedTableDetails(database, tableToJoinName)) {
                 MySQLA_loggers.logError("Could not fetch table details from database.");
                 if (callback != null) callback.onFailure();
                 return returnData;
@@ -74,48 +73,18 @@ public class MySQLA_crud_getFill {
 
         // ---> Calculate column/field correlation from joined column names
         List<String> allColumns = new ArrayList<>(
-                MySQLA_tableProperties.getAllColumnNames().get(config.database).get(table));
+                MySQLA_tableProperties.getAllColumns(database, table));
         for (String tableName : tablesToJoin) {
-            allColumns.addAll(MySQLA_tableProperties.getAllColumnNames().get(config.database).get(tableName));
+            allColumns.addAll(MySQLA_tableProperties.getAllColumns(database, tableName));
         }
         Map<String, String> propertyMap = MySQLA_correlations.getColumnFieldCorrelation(type,
-                allColumns, config.database, table);
+                allColumns, database, table);
 
         // ---> Build SQL query
-        String from = " from " + table + " ";
-        String join = "";
-        for (int x = 0; x<tablesToJoin.length; x++) {
-            String tableToJoinPrimaryKey =
-                    MySQLA_tableProperties.getPrimaryKeys().get(config.database).get(tablesToJoin[x]);
-            join += "left join " + tablesToJoin[x] + " on " + table + "." + IdColumns[x] + "=" + tablesToJoin[x] + "." +
-                    tableToJoinPrimaryKey + " ";
-        }
-
-        String where = "where " + sqlWhereFilter + " ";
-        String query = "select ";
-
-        for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-            if (MySQLA_tableProperties.getAllColumnNames()
-                    .get(config.database).get(table).contains(entry.getKey())) {
-                query += table + "." + entry.getKey() + ", ";
-            }
-            else {
-                for (String tableName : tablesToJoin) {
-                    if (MySQLA_tableProperties.getAllColumnNames()
-                            .get(config.database).get(tableName).contains(entry.getKey())) {
-                        query += tableName + "." + entry.getKey() + ", ";
-                        break;
-                    }
-                }
-            }
-        }
-
-        query = query.replaceAll(", $", "");
-        query += from + join + (sqlWhereFilter == null ? "" : where);
+        String query = buildSQLQuery(database, table, IdColumns, tablesToJoin, sqlWhereFilter, propertyMap);
 
         // ---> Retrieve data from cache if caching is enabled and available
-        List<T> cacheData = null;
-        cacheData = MySQLA_cache.isCacheAvailable(config.database, table, query);
+        List<T> cacheData = MySQLA_cache.isCacheAvailable(database, table, query);
         if (cacheData != null) {
             for (T t : cacheData) MySQLA_loggers.logDetails(t.toString());
             if (callback != null) callback.onSuccess(cacheData);
@@ -143,8 +112,52 @@ public class MySQLA_crud_getFill {
         };
 
         // ---> Store result to cache if available and return.
-        MySQLA_cache.storeToCache(config.database, table, query, returnData);
+        MySQLA_cache.storeToCache(database, table, query, returnData);
         if (callback != null) callback.onSuccess(returnData);
         return returnData;
+    }
+
+    public static <T> void getFillMainParallel(Class<T> type, Connection conn, String database, String table,
+                                          String[] IdColumns, String[] tablesToJoin, String sqlWhereFilter,
+                                          OnGetComplete<T> callback) {
+        Thread t = new Thread( () -> {
+            getFillMain(type, conn, database, table, IdColumns, tablesToJoin, sqlWhereFilter, callback);
+        });
+        t.start();
+    }
+
+    private static <T> String buildSQLQuery (String database, String table,
+                                             String[] IdColumns, String[] tablesToJoin, String sqlWhereFilter,
+                                             Map<String, String> propertyMap) {
+        // ---> Build SQL query
+        String from = " from " + table + " ";
+        String join = "";
+        for (int x = 0; x<tablesToJoin.length; x++) {
+            String tableToJoinPrimaryKey =
+                    MySQLA_tableProperties.getPrimaryKey(database, tablesToJoin[x]);
+            join += "left join " + tablesToJoin[x] + " on " + table + "." + IdColumns[x] + "=" + tablesToJoin[x] + "." +
+                    tableToJoinPrimaryKey + " ";
+        }
+
+        String where = "where " + sqlWhereFilter + " ";
+        String query = "select ";
+
+        for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+            if (MySQLA_tableProperties.getAllColumns(database, table).contains(entry.getKey())) {
+                query += table + "." + entry.getKey() + ", ";
+            }
+            else {
+                for (String tableName : tablesToJoin) {
+                    if (MySQLA_tableProperties.getAllColumns(database, tableName).contains(entry.getKey())) {
+                        query += tableName + "." + entry.getKey() + ", ";
+                        break;
+                    }
+                }
+            }
+        }
+
+        query = query.replaceAll(", $", "");
+        query += from + join + (sqlWhereFilter == null ? "" : where);
+        return query;
     }
 }

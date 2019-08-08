@@ -39,7 +39,8 @@ public class MySQLA_correlations {
             List<Map<String, Object>> correlations, Class type, List<String> fields, String columnName,
             String database, String table) {
 
-        String columnType = MySQLA_tableProperties.getAllColumnTypes().get(database).get(table).get(columnName);
+        String columnType = MySQLA_tableProperties.getColumnType(database, table, columnName);
+
         for (String fieldName : fields) {
 
             // ---> If column type is not convertible to non-string field type, do not consider.

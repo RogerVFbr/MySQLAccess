@@ -1,38 +1,35 @@
 package com.company.mysqlaccess;
 
-import com.company.mysqlaccess.models.MySQLAConfig;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 public class MySQLA_crud_delete {
-    public static Integer deleteMain (String sqlWhere, MySQLAConfig config, Connection conn, String selectedTable,
-                                   OnComplete<Integer> callback) {
+
+    public static Integer deleteMain (Connection conn, String database, String table, String sqlWhere,
+                                      OnComplete<Integer> callback) {
 
         // ---> If no connection has been established, abort.
         if (!MySQLA_validators.hasConnection(conn)) {
             MySQLA_loggers.logError("DELETE - Unable to execute command because there is no connection to '" +
-                    config.database + "' database.");
+                    database + "' database.");
             if (callback != null) callback.onFailure();
             return null;
         }
 
         // ---> If no table is selected, abort.
-        String table = selectedTable;
-        if (!MySQLA_validators.isTableSelected(table, config)) {
-            MySQLA_loggers.logError("DELETE - No table selected on database '" + config.database
+        if (!MySQLA_validators.isTableSelected(table)) {
+            MySQLA_loggers.logError("DELETE - No table selected on database '" + database
                     + "'. Use setTable(..tablename..) " + "before executing mysqlaccess commands.");
             if (callback != null) callback.onFailure();
             return null;
         }
 
         // ---> Get table properties of not already present
-        MySQLA_tableProperties.updateTableProperties(config, conn, table);
+        MySQLA_tableProperties.updateTableProperties(database, conn, table);
 
         // ---> If unable to fetch table details, abort
-        if (!MySQLA_validators.hasFetchedTableDetails(config.database, table,
-                MySQLA_tableProperties.getAllColumnNames())) {
+        if (!MySQLA_validators.hasFetchedTableDetails(database, table)) {
             MySQLA_loggers.logError("DELETE - Could not fetch table details from database.");
             if (callback != null) callback.onFailure();
             return null;
@@ -41,6 +38,20 @@ public class MySQLA_crud_delete {
         // ---> Build SQL query
         String query = "delete from " + table + " where " + sqlWhere;
 
+        // ---> Execute query on connection
+        return executeQueryOnConnection(conn, database, table, query, callback);
+    }
+
+    public static void deleteMainParallel (Connection conn, String database, String table, String sqlWhere,
+                                      OnComplete<Integer> callback) {
+        Thread t = new Thread( () -> {
+            deleteMain(conn, database, table, sqlWhere, callback);
+        });
+        t.start();
+    }
+
+    private static Integer executeQueryOnConnection (Connection conn, String database, String table,
+                                                    String query, OnComplete<Integer> callback) {
         // ---> Execute query on connection
         try {
             Statement st = conn.createStatement();
@@ -54,7 +65,7 @@ public class MySQLA_crud_delete {
             }
 
             MySQLA_loggers.logInfo("DELETE - Successfully deleted " + result + " row(s).");
-            MySQLA_cache.deleteCache(config.database, table);
+            MySQLA_cache.deleteCache(database, table);
             if (callback != null) callback.onSuccess(result);
             return result;
 

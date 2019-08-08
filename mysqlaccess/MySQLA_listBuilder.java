@@ -1,18 +1,44 @@
 package com.company.mysqlaccess;
 
 import java.lang.reflect.Field;
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.*;
+import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MySQLA_listBuilder {
 
-    private static <T> T instantiateDataObject(Class<T> type) {
-        T obj = null;
+    public static <T> boolean buildListFromRetrievedData(Class<T> type, ResultSet resultSet, List<T> returnData,
+                                                         Map<String, String> propertyMap) {
 
+        Set<String> incompatibleFields = new HashSet<>();
+
+        // ---> Build list from retrieved data
+        while (true) {
+            try {
+                if (!resultSet.next()) break;
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            // ---> Build single data object from retrieved row
+            T data = instantiateDataObject(type);
+            if (data == null) return false;
+
+            for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
+                updateFieldValue(data, incompatibleFields, entry.getKey(), entry.getValue(), resultSet);
+            }
+
+            MySQLA_loggers.logDetails(data.toString());
+            returnData.add(data);
+        }
+        return true;
+    }
+
+    private static <T> T instantiateDataObject(Class<T> type) {
+
+        T obj = null;
         try {
             obj = type.getConstructor().newInstance();
 
@@ -37,68 +63,20 @@ public class MySQLA_listBuilder {
         try {
             field = data.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
-            if (field.getType() == byte.class)            field.set(data, resultSet.getByte(columnName));
-            else if (field.getType() == short.class)      field.set(data, resultSet.getShort(columnName));
-            else if (field.getType() == int.class)        field.set(data, resultSet.getInt(columnName));
-            else if (field.getType() == long.class)       field.set(data, resultSet.getLong(columnName));
-            else if (field.getType() == float.class)      field.set(data, resultSet.getFloat(columnName));
-            else if (field.getType() == double.class)     field.set(data, resultSet.getDouble(columnName));
-            else if (field.getType() == boolean.class)    field.set(data, resultSet.getBoolean(columnName));
-            else if (field.getType() == String.class)     field.set(data, resultSet.getString(columnName));
-            else if (field.getType() == LocalDate.class)  field.set(data, resultSet.getDate(columnName).toLocalDate());
-            else if (field.getType() == LocalDateTime.class)  field.set(data, resultSet.getTimestamp(columnName).toLocalDateTime());
-            else if (field.getType() == LocalTime.class)  field.set(data, resultSet.getTimestamp(columnName).toLocalDateTime().toLocalTime());
-            else if (field.getType() == Year.class)  field.set(data, Year.of(resultSet.getDate(columnName).toLocalDate().getYear()+1));
-            else if (field.getType() == java.sql.Date.class || field.getType() == java.util.Date.class)  {
-                LocalDate ld = resultSet.getTimestamp(columnName).toLocalDateTime().toLocalDate();
-                field.set(data, Date.valueOf(ld));
-            }
-            else field.set(data, field.getType().cast(resultSet.getObject(columnName)));
+            Object fieldContent = MySQLA_orm.getObject(field.getType(), resultSet, columnName);
+            field.set(data, fieldContent);
             return;
-
         } catch (NoSuchFieldException e) {
             StackTraceElement frame = e.getStackTrace()[1];
             MySQLA_loggers.logError("Required field (" + e.getMessage() + ") doesn't exist on model. File: "
                     + frame.getFileName() + " | Method: " + frame.getMethodName() + " | Line number: "
                     + frame.getLineNumber());
-
         } catch (Exception e) {
             String columnType = e.getMessage().replaceAll("Cannot cast ", "").split(" to ")[0];
             String fieldType = field.getType().toString().replaceAll("class ", "");
-            MySQLA_loggers.logError("Table column and model field type mismatch -> Column: " + columnName + " (" + columnType + ") | " +
-                    "Field: " + fieldName + " (" + fieldType + ")");
+            MySQLA_loggers.logError("Table column and model field type mismatch -> Column: " + columnName + " ("
+                    + columnType + ") | " + "Field: " + fieldName + " (" + fieldType + ")");
         }
         incompatibleFields.add(fieldName);
-    }
-
-    public static <T> boolean buildListFromRetrievedData(Class<T> type, ResultSet resultSet, List<T> returnData,
-                                                          Map<String, String> propertyMap) {
-
-        Set<String> incompatibleFields = new HashSet<>();
-
-        // ---> Build list from retrieved data
-        while (true) {
-            try {
-                if (!resultSet.next()) break;
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                continue;
-            }
-
-            // ---> Build single data object from retrieved row
-            T data = instantiateDataObject(type);
-            if (data == null) {
-                return false;
-            }
-
-            for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
-                updateFieldValue(data, incompatibleFields, entry.getKey(), entry.getValue(), resultSet);
-            }
-
-            MySQLA_loggers.logDetails(data.toString());
-            returnData.add(data);
-        }
-        return true;
     }
 }
